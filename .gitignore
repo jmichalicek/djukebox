@@ -2,3 +2,6 @@
 *.bak
 *.swp
 *.pyc
+djukebox.egg-info/*
+dist/*
+build/*
