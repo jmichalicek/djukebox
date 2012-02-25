@@ -3,7 +3,7 @@ from django.core.urlresolvers import reverse
 from django.shortcuts import render_to_response, get_object_or_404
 from django.template import RequestContext
 from django.views.decorators.cache import cache_control, cache_page
-from django.http import Http404, HttpResponseRedirect
+from django.http import Http404, HttpResponseRedirect, HttpResponse
 
 from models import Album, Artist, Track
 from forms import SimpleTrackUploadForm
@@ -61,7 +61,7 @@ def main(request):
     )
 
 @login_required
-def upload_track(request):
+def upload_track(request, hidden_frame=False):
 
     if request.method == 'POST':
         track = Track(user=request.user)
@@ -70,7 +70,13 @@ def upload_track(request):
             track = upload_form.save()
             track.title = 'Test Track'
             track.save()
-            return HttpResponseRedirect(reverse('djukebox-homeframe'))
+            if hidden_frame == False:
+                return HttpResponseRedirect(reverse('djukebox-homeframe'))
+            else:
+                return HttpResponse('{"track_upload": {"status": "sucess", "title": "%s"}}' %track.title, mimetype='application/javascript')
+
+        if hidden_frame == True:
+            return HttpResponse('{"track_upload": {"status": "error"}}', mimetype='application/javascript')
 
     else:
         upload_form = SimpleTrackUploadForm()

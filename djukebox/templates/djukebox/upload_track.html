@@ -1,7 +1,7 @@
 {% extends 'djukebox/base.html' %}
 {% block body %}
 {# targets an iframe in main.html #}
-<form name="upload_file" enctype="multipart/form-data" method="post" action="{% url djukebox-upload %}" target="track_upload">
+<form name="upload_file" enctype="multipart/form-data" method="post" action="{% url djukebox-iframe-upload %}" target="track_upload">
   <ul>
     {% csrf_token %}
     {{ upload_form.as_ul }}

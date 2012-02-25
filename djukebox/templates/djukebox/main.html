@@ -17,7 +17,30 @@
       </div>
     </div>
   </div>
+  <div class="alert" style="display: none" id="upload_status_alert">
+    <a class="close" data-dismiss="alert">x</a>
+    <span id="upload_status_message"></span>
+  </div>
 </div>
 {#File upload iFrame until XHR Level 2 file upload has better support #}
 <iframe id="track_upload" name="track_upload" src="{% url djukebox-upload %}" style="display: none"></iframe>
+
+{% block jquery_scripts %}
+<script type="text/javascript">
+$(document).ready(function() {
+    $("#track_upload").load(function() {
+        var json = jQuery.parseJSON($('#track_upload').contents().text());
+
+        if(json.track_upload.status == "sucess") {
+            $('#upload_status_message').text('Successfully uploaded ' + json.track_upload.title);
+            $('#upload_status_alert').addClass("alert-success");
+        } else {
+           $('#upload_status_message').text('Error uploading ' + json.track_upload.title);
+           $('#upload_status_alert').addClass("alert-error");
+        }
+        $('#upload_status_alert').show();
+    });
+});
+</script>
+{% endblock %}
 {% endblock %}

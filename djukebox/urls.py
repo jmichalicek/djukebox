@@ -8,5 +8,6 @@ urlpatterns = patterns('',
                        url(r'^artist_list/', artist_list, name='djukebox-artistlist'),
                        url(r'^track_list/', track_list, name='djukebox-tracklist'),
                        url(r'^upload_track/', upload_track, name='djukebox-upload'),
+                       url(r'^iframe_upload_track/', upload_track, {'hidden_frame': True}, name='djukebox-iframe-upload'),
                        url(r'^login/', 'django.contrib.auth.views.login', {'template_name': 'djukebox/login.html'}, name='djukebox-login'),
                        )
