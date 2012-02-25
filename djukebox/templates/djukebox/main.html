@@ -1,0 +1,21 @@
+{% extends 'djukebox/base.html' %}
+{% block body %}
+<div class="container-fluid">
+  <div class="row-fluid">
+    <div class="span2">
+      <ul class="nav nav-pills nav-stacked">
+        <li><a target="content_view_frame" href="{% url djukebox-homeframe %}">Home</a></li>
+        <li><a target="content_view_frame" href="{% url djukebox-albumlist %}">Albums</a></li>
+        <li><a target="content_view_frame" href="{% url djukebox-artistlist %}">Artists</a></li>
+        <li><a target="content_view_frame" href="{% url djukebox-tracklist %}">All Songs</a></li>
+        <li><a target="content_view_frame" href="{% url djukebox-upload %}">Upload</a></li>
+      </ul>
+    </div>
+    <div class="span10">
+      <div id="content_view" class="span10">
+        <iframe name="content_view_frame" class="main_iframe" src="{{ content_view }}" />
+      </div>
+    </div>
+  </div>
+</div>
+{% endblock %}

@@ -1,0 +1,12 @@
+{% extends 'djukebox/base.html' %}
+{% block body %}
+<div class="container">
+  <form name="login" method="post" login="{% url djukebox-login %}">
+    {% csrf_token %}
+    <ul>
+      {{ form.as_ul }}
+    </ul>
+    <input type="submit" value="login" />
+  </form>
+</div>
+{% endblock %}
