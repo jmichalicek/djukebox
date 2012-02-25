@@ -1,4 +1,5 @@
 from django.contrib.auth.decorators import login_required
+from django.core.urlresolvers import reverse
 from django.shortcuts import render_to_response, get_object_or_404
 from django.template import RequestContext
 from django.views.decorators.cache import cache_control, cache_page
@@ -63,10 +64,12 @@ def main(request):
 def upload_track(request):
 
     if request.method == 'POST':
-        upload_form = SimpleTrackUploadForm(request.POST, request.FILES)
+        track = Track(user=request.user)
+        upload_form = SimpleTrackUploadForm(request.POST, request.FILES, instance=track)
         if upload_form.is_valid():
-            # This is going to break the current site if a track is playing
-            # and the user uploads.  Need to get ajax file upload going.
+            track = upload_form.save()
+            track.title = 'Test Track'
+            track.save()
             return HttpResponseRedirect(reverse('djukebox-homeframe'))
 
     else:

@@ -22,7 +22,7 @@ class Artist(models.Model):
 class Track(models.Model):
     """A specific audio track or song"""
     title = models.CharField(max_length=100)
-    album = models.ForeignKey('Album', db_index=True)
+    album = models.ForeignKey('Album', db_index=True, null=True, blank=True)
     track_number = models.PositiveIntegerField(null=True, blank=True)
     asset = models.FileField(upload_to='djukebox/tracks/%Y/%m/%d/')
     user = models.ForeignKey(User, db_index=True)
@@ -30,4 +30,4 @@ class Track(models.Model):
     #TODO: Other attributes - genre, duration, isrc, etc.
 
     def __unicode__(self):
-        return u'%s' %self.name
+        return u'%s' %self.title

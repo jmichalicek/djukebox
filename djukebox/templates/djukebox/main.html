@@ -13,9 +13,11 @@
     </div>
     <div class="span10">
       <div id="content_view" class="span10">
-        <iframe name="content_view_frame" class="main_iframe" src="{{ content_view }}" />
+        <iframe name="content_view_frame" class="main_iframe" src="{{ content_view }}"></iframe>
       </div>
     </div>
   </div>
 </div>
+{#File upload iFrame until XHR Level 2 file upload has better support #}
+<iframe id="track_upload" name="track_upload" src="{% url djukebox-upload %}" style="display: none"></iframe>
 {% endblock %}
