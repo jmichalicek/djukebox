@@ -2,3 +2,7 @@
     width: 100%;
     height: 80%;
 }
+
+html, body {
+    height: 100%;
+}

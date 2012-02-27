@@ -1,0 +1,10 @@
+{% extends 'djukebox/base.html' %}
+{% block body %}
+<div class="container">
+  {% for artist in artists %}
+  <div class="thumbnail">
+    <span>{{ artist }}</span>
+  </div>
+  {% endfor %}
+</div>
+{% endblock %}

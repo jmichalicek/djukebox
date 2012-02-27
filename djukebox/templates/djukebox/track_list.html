@@ -1,0 +1,34 @@
+{% extends 'djukebox/base.html' %}
+{% block body %}
+<div class="container">
+  {% for track in tracks %}
+  <div id="{{ track.id }}" class="thumbnail track_item">
+    <span>{{ track }}</span>
+  </div>
+  {% endfor %}
+</div>
+
+<script type="text/javascript">
+$(document).ready(function() {
+    {# This is pretty terrible, but until I think of a better way to do this, here it is. #}
+    {# Ideally I could just have 2 vars, ogg_stream and mp3_stream which I can append the id to #}
+    {# but any way to create a automagically resolvable url (via reverse(urlname) or the url tag) #}
+    {#will create one that django tries to allow access to #}
+    var ogg_stream_list = [];
+    var mp3_stream_list = [];
+    {% for track in tracks %}
+    ogg_stream_list[{{ track.id }}] = "{% url djukebox-stream-ogg  track.id %}";
+    mp3_stream_list[{{ track.id }}] = "{% url djukebox-stream-mp3  track.id %}";
+    {% endfor %}
+    $(".track_item").dblclick(function() {
+        parent.$("#ogg_source").attr('src', ogg_stream_list[this.id]).detach().appendTo(parent.$("#audio_player"))
+        parent.$("#mp3_source").attr('src', mp3_stream_list[this.id]).detach().appendTo(parent.$("#audio_player"))
+        /* This doesn't seem to be needed by opera at all.  For some reason with firefox without it, it doesn't
+           work in any manner.  With this line, if you double click twice it works, but the first time it detaches
+           and never re-appears
+        */
+        parent.$("#audio_player").detach().appendTo(parent.$("#audio_player_div"))
+    });
+});
+</script>
+{% endblock %}

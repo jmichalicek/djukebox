@@ -1,8 +1,8 @@
 from django import forms
-from models import Track
+from models import AudioFile
 
 class SimpleTrackUploadForm(forms.ModelForm):
-    asset = forms.FileField(label='Select a song to upload')
+    file = forms.FileField(label='Select a song to upload')
     class Meta:
-        model = Track
-        exclude = ('title', 'album', 'track_number', 'user')
+        model = AudioFile
+        exclude = ('user', 'track')

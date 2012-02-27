@@ -2,7 +2,7 @@
 {% block body %}
 <div class="container-fluid">
   <div class="row-fluid">
-    <div class="span2">
+    <div class="span2 sidebar">
       <ul class="nav nav-pills nav-stacked">
         <li><a target="content_view_frame" href="{% url djukebox-homeframe %}">Home</a></li>
         <li><a target="content_view_frame" href="{% url djukebox-albumlist %}">Albums</a></li>
@@ -12,10 +12,14 @@
       </ul>
     </div>
     <div class="span10">
-      <div id="content_view" class="span10">
-        <iframe name="content_view_frame" class="main_iframe" src="{{ content_view }}"></iframe>
-      </div>
+      <iframe name="content_view_frame" class="main_iframe" src="{{ content_view }}"></iframe>
     </div>
+  </div>
+  <div class="row-fluid" id="audio_player_div">
+    <audio id="audio_player" preload="auto" controls>
+      <source id="ogg_source" type="audio/ogg" />
+      <source id="mp3_source" type="audio/mp3" />
+    </audio>
   </div>
   <div class="alert" style="display: none" id="upload_status_alert">
     <a class="close" data-dismiss="alert">x</a>
@@ -27,10 +31,12 @@
 
 {% block jquery_scripts %}
 <script type="text/javascript">
+/* This could maybe be done better to pop up overlapping alerts or something */
 $(document).ready(function() {
     $("#track_upload").load(function() {
         var json = jQuery.parseJSON($('#track_upload').contents().text());
 
+        $('#upload_status_alert').removeClass("alert-success alert-error");
         if(json.track_upload.status == "sucess") {
             $('#upload_status_message').text('Successfully uploaded ' + json.track_upload.title);
             $('#upload_status_alert').addClass("alert-success");
