@@ -32,10 +32,10 @@ def convert_file_to_ogg(file_id):
     #DJUKEBOX_FFMPEG_BIN = '/usr/bin/ffmpeg'
 
     if settings.DJUKEBOX_AUDIO_ENCODER == 'sox':
-        subprocess.call([settings.SOX_BIN, source_path, target_filename])
+        subprocess.call([settings.DJUKEBOX_SOX_BIN, source_path, target_filename])
     if settings.DJUKEBOX_AUDIO_ENCODER == 'ffmpeg':
         # have not tested this yet.
-        subprocess.call([settings.SOX_BIN, '-i', source_path, '-acodec', 'vorbis', target_filename])
+        subprocess.call([settings.DJUKEBOX_FFMPEG_BIN, '-i', source_path, '-acodec', 'vorbis', target_filename])
 
     new_file = AudioFile(track=source_file.track)
     new_file.file.name = os.path.join(media_directory, os.path.basename(target_filename))
