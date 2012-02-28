@@ -63,5 +63,5 @@ def ogg_convert(sender, **kwargs):
         new_file.full_clean()
         new_file.save()
 
-post_save.connect(ogg_convert, sender=AudioFile)
+#post_save.connect(ogg_convert, sender=AudioFile)
     

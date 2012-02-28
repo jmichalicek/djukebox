@@ -48,7 +48,7 @@ def audio_player(request, track_id, format):
     # which throws off firefox when it gets the content-type header.  Opera is ok with it, though.
     # As a fix I am just grabbing the first one here
     resp = HttpResponse(FileIterWrapper(open(file_path,"rb")), mimetype=mimetypes.guess_type(file_path)[0])
-    resp['Content-Length'] = os.path.getsize(file_path)  
+    resp['Content-Length'] = os.path.getsize(file_path)
     resp['Content-Disposition'] = 'filename=' + os.path.basename(file_path)  
     return resp
 
@@ -96,6 +96,11 @@ def upload_track(request, hidden_frame=False):
             audio_file.track = track
             audio_file.full_clean()
             audio_file.save()
+
+            ####### encode ogg ####
+            from tasks import convert_file_to_ogg
+            convert_file_to_ogg.delay(audio_file.id)
+            # TODO: make this dependent upon settings.py settings
 
             if hidden_frame == False:
                 return HttpResponseRedirect(reverse('djukebox-homeframe'))
