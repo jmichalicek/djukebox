@@ -12,6 +12,8 @@ Configuration settings for settings.py - it should be pretty clear what these ar
 DJUKEBOX_AUDIO_ENCODER = 'sox' # or 'ffmpeg'
 DJUKEBOX_SOX_BIN = '/usr/bin/sox'
 DJUKEBOX_FFMPEG_BIN = '/usr/bin/ffmpeg'
+DJUKEBOX_UPLOAD_FILE_TYPES = ('audio/mp3', 'audio/mpeg', 'audio/ogg', 'audio/oga')
+DJUKEBOX_UPLOAD_FILE_MAX_SIZE = 100000000 #random big number here I haven't tested this bit, I just wanted the upload types tested
 
 
 FAQ (I have not actually been asked frequently or at all as this project has only existed a few days):

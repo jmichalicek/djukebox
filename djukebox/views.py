@@ -108,7 +108,7 @@ def upload_track(request, hidden_frame=False):
                 return HttpResponse('{"track_upload": {"status": "sucess", "title": "%s"}}' %track.title, mimetype='application/javascript')
 
         if hidden_frame == True:
-            return HttpResponse('{"track_upload": {"status": "error"}}', mimetype='application/javascript')
+            return HttpResponse('{"track_upload": {"status": "error", "errors": %s}}' %upload_form.errors, mimetype='application/javascript')
 
     else:
         upload_form = SimpleTrackUploadForm()
