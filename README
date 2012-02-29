@@ -1,0 +1,33 @@
+This is a pure HTML 5 based audio storage and playing app.  It does not and will not have a flash fallback.
+Djukebox is currently very, very early in its development, but as is it allows you to upload an mp3 and it will
+automatically encode an ogg version using sox or ffmpeg asynchronously via celery.  There is a track list view
+which shows the tracks you currently have loaded and will play them (with a few bugs, depending on the web browser.
+
+Requirements:
+Django 1.3
+Celery - I believe 2.4+ will work, I am using 2.5.  You need a version with the @task decorator in celery.task
+SoX or ffmpeg
+
+Configuration settings for settings.py - it should be pretty clear what these are:
+DJUKEBOX_AUDIO_ENCODER = 'sox' # or 'ffmpeg'
+DJUKEBOX_SOX_BIN = '/usr/bin/sox'
+DJUKEBOX_FFMPEG_BIN = '/usr/bin/ffmpeg'
+
+
+FAQ (I have not actually been asked frequently or at all as this project has only existed a few days):
+
+Q: There's a bug in X / X feture is missing (ok, that's not really worded as a question):
+A: If it's an obvious issue, I probably know.  I'm testing in the latest Firefox, Opera, and IE8 currently.
+   It's very early in development, though, so it's going to be pretty broken.
+
+Q: Why is there no flash fallback?
+A: This is a project just for fun for me to experiment with stuff, use the latest and greatest tech, and learn.
+   My goal is not to create a huge service or necessarily a widely used back end for other services to make everyone happy.
+   You can create your own templates and js if you want something different.
+
+Q: Why Celery?
+A: See above for one.  Also, for the audio encoding.  Encoding within the browser held process is terrible and error prone.
+   On the off chance  that this does get used for something serious, Celery is way more scalable and controllable than 
+   things like forking off a separate python process from the fastcgi/mod_wsgi/whatever process.  It's really easy to 
+   get working with RabbitMQ, and if you really dont't want to use RabbitMQ it can work with other brokers, so 
+   there's really no reason not to use it.
