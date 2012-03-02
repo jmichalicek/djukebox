@@ -8,9 +8,9 @@ class SimpleTrackUploadForm(forms.ModelForm):
     def clean_file(self):
         #from http://stackoverflow.com/a/4855340
         data = self.cleaned_data['file']
-        #try:
         if data:
-            #file_type = data.content_type.split('/')[0]
+            # This comes from the http headers.  They could be lying.
+            # Be sure to validate the actual file after saving as well.
             file_type = data.content_type
 
             if len(data.name.split('.')) == 1:
@@ -21,9 +21,6 @@ class SimpleTrackUploadForm(forms.ModelForm):
                     raise forms.ValidationError('Please keep filesize under %s. Current filesize %s' % (filesizeformat(settings.DJUKEBOX_UPLOAD_FILE_MAX_SIZE), filesizeformat(data._size)))
             else:
                 raise forms.ValidationError('File type is not supported: %s' %file_type)
-        #except:
-        #    raise forms.ValidationError('Wtf happened?')
-
         return data
 
     class Meta:

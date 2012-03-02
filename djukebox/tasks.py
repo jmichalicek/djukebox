@@ -4,40 +4,48 @@ from django.conf import settings
 from celery.task import task
 from models import AudioFile
 
+DEFAULT_OGG_TO_MP3 = 'djukebox.converters.DjukeboxMp3FromOgg'
+DEFAULT_MP3_TO_OGG = 'djukebox.converters.DjukeboxOggFromMp3'
 
 # TODO: provide rate limiting options
 @task
 def convert_file_to_ogg(file_id):
     # TODO: make sure the file isn't already an ogg
+    try:
+        cls = settings.DJUKEBOX_OGG_CREATOR
+    except AttributeError:
+        cls = DEFAULT_MP3_TO_OGG
 
-    source_file = AudioFile.objects.get(id=file_id)
-    media_directory = os.path.dirname(source_file.file.name)
-    source_path = os.path.join(settings.MEDIA_ROOT, source_file.file.name)
+    converter = class_from_string(cls)()
 
-    directory, name = os.path.split(source_path)
-    name, extension = os.path.splitext(name)
-    wav_name = os.path.join(directory, '%s.wav' %name)
-    target_filename = os.path.join(directory, '%s.ogg' %name)
+    mp3_file = AudioFile.objects.get(id=file_id)
+    ogg_file = converter.convert(mp3_file)
 
+    return ogg_file
 
-    # TODO: Make this a factory/pluggable deal so that users can
-    # write their own encoding script and plug it in if they want
+@task
+def convert_file_to_mp3(file_id):
+    try:
+        cls = settings.DJUKEBOX_MP3_CREATOR
+    except AttributeError:
+        cls = DEFAULT_OGG_TO_MP3
 
-    # pysox was corrupting files so revert to command line tools
-    # run based on the settings.py settings below.  ffmpeg creates a smaller file
-    # but changes command line options frequently and occasionally libs
-    # so no promises it'll work
-    #DJUKEBOX_AUDIO_ENCODER = 'sox' # or 'ffmpeg'
-    #DJUKEBOX_SOX_BIN = '/usr/bin/sox'
-    #DJUKEBOX_FFMPEG_BIN = '/usr/bin/ffmpeg'
+    converter = class_from_string(cls)()
 
-    if settings.DJUKEBOX_AUDIO_ENCODER == 'sox':
-        subprocess.call([settings.DJUKEBOX_SOX_BIN, source_path, target_filename])
-    if settings.DJUKEBOX_AUDIO_ENCODER == 'ffmpeg':
-        # have not tested this yet.
-        subprocess.call([settings.DJUKEBOX_FFMPEG_BIN, '-i', source_path, '-acodec', 'vorbis', target_filename])
+    ogg_file = AudioFile.objects.get(id=file_id)
+    mp3_file = converter.convert(ogg_file)
 
-    new_file = AudioFile(track=source_file.track)
-    new_file.file.name = os.path.join(media_directory, os.path.basename(target_filename))
-    new_file.full_clean()
-    new_file.save()
+    return mp3_file
+
+def class_from_string(class_string):
+    """Takes a string package.Class and returns an instance of the class"""
+
+    class_package = class_string.split('.')
+    module = '.'.join(class_package[:-1])
+    m = __import__(module)
+    # m is just the top level module
+
+    for p in class_package[1:]:
+        m  = getattr(m, p)
+
+    return m

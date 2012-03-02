@@ -1,4 +1,24 @@
 {% extends 'djukebox/base.html' %}
+{% block jquery_scripts %}
+<script type="text/javascript">
+/* This could maybe be done better to pop up overlapping alerts or something */
+$(document).ready(function() {
+    $("#track_upload").load(function() {
+        var json = jQuery.parseJSON($('#track_upload').contents().text());
+
+        $('#upload_status_alert').removeClass("alert-success alert-error");
+        if(json.track_upload.status == "sucess") {
+            $('#upload_status_message').text('Successfully uploaded ' + json.track_upload.title);
+            $('#upload_status_alert').addClass("alert-success");
+        } else {
+           $('#upload_status_message').text('Error uploading: ' + json.track_upload.error);
+           $('#upload_status_alert').addClass("alert-error");
+        }
+        $('#upload_status_alert').show();
+    });
+});
+</script>
+{% endblock %}
 {% block body %}
 <div class="container-fluid">
   <div class="row-fluid">
@@ -28,25 +48,4 @@
 </div>
 {#File upload iFrame until XHR Level 2 file upload has better support #}
 <iframe id="track_upload" name="track_upload" src="{% url djukebox-upload %}" style="display: none"></iframe>
-
-{% block jquery_scripts %}
-<script type="text/javascript">
-/* This could maybe be done better to pop up overlapping alerts or something */
-$(document).ready(function() {
-    $("#track_upload").load(function() {
-        var json = jQuery.parseJSON($('#track_upload').contents().text());
-
-        $('#upload_status_alert').removeClass("alert-success alert-error");
-        if(json.track_upload.status == "sucess") {
-            $('#upload_status_message').text('Successfully uploaded ' + json.track_upload.title);
-            $('#upload_status_alert').addClass("alert-success");
-        } else {
-           $('#upload_status_message').text('Error uploading ' + json.track_upload.title);
-           $('#upload_status_alert').addClass("alert-error");
-        }
-        $('#upload_status_alert').show();
-    });
-});
-</script>
-{% endblock %}
 {% endblock %}

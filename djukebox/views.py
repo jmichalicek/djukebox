@@ -8,6 +8,8 @@ from django.http import Http404, HttpResponseRedirect, HttpResponse
 
 from models import Album, Artist, Track, AudioFile
 from forms import SimpleTrackUploadForm
+from tasks import convert_file_to_ogg
+
 
 import os
 import mimetypes
@@ -97,18 +99,36 @@ def upload_track(request, hidden_frame=False):
             audio_file.full_clean()
             audio_file.save()
 
-            ####### encode ogg ####
-            from tasks import convert_file_to_ogg
-            convert_file_to_ogg.delay(audio_file.id)
-            # TODO: make this dependent upon settings.py settings
-
-            if hidden_frame == False:
-                return HttpResponseRedirect(reverse('djukebox-homeframe'))
+            # Now that this is saved, make sure the file really is a valid filetype
+            # and kill it if it's not.  The track upload form validates the http content-type header
+            # but does not actually check the file.
+            mimetype = mimetypes.guess_type(os.path.join(settings.MEDIA_ROOT, audio_file.file.name))[0]
+            if mimetype not in settings.DJUKEBOX_UPLOAD_FILE_TYPES:
+                # Delete the Track and AudioFile and return an error
+                json_response_data = '{"track_upload": {"status": "error", "error": "invalid file type %s"}}' %mimetype
+                audio_file.delete()
+                track.delete()
             else:
-                return HttpResponse('{"track_upload": {"status": "sucess", "title": "%s"}}' %track.title, mimetype='application/javascript')
+                if mimetype == 'audio/ogg':
+                    create_mp3_file(track=track, ogg_file=audio_file)
+                elif mimetype in ('audio/mp3', 'audio/mpeg'):
+                    convert_file_to_ogg.delay(audio_file.id)
+                    # TODO: make this dependent upon settings.py settings
+
+                #success!
+                json_response_data = '{"track_upload": {"status": "sucess", "title": "%s"}}' %track.title
+
+        else:
+            # Get the errors in a cleaner way
+            json_response_data = '{"track_upload": {"status": "error", "errors": %s}}' %upload_form.errors
+
 
         if hidden_frame == True:
-            return HttpResponse('{"track_upload": {"status": "error", "errors": %s}}' %upload_form.errors, mimetype='application/javascript')
+            return HttpResponse(json_response_data, mimetype='application/javascript')
+        else:
+            # On the off chance the upload is not being posted to an iframe so that it can happen asynchronously
+            # where is a sane place to redirect to?
+            return HttpResponseRedirect(reverse('djukebox-homeframe'))
 
     else:
         upload_form = SimpleTrackUploadForm()

@@ -1,6 +1,6 @@
 from django.db import models
 from django.contrib.auth.models import User
-from django.db.models.signals import post_save
+from django.db.models.signals import post_delete
 from django.conf import settings
 
 import os
@@ -42,26 +42,9 @@ class Track(models.Model):
     def __unicode__(self):
         return u'%s' %self.title
 
-
-# signal handlers
-def ogg_convert(sender, **kwargs):
-    from utils import convert_file_to_ogg
-
-    # TODO: make this dependent upon settings.py settings
-    # TODO: Make this possible to do async with celery as an option
-
+def delete_audio_files(sender, **kwargs):
     audio_file = kwargs.get('instance')
-    source_path = os.path.join(settings.MEDIA_ROOT, audio_file.file.name)
-    ogg_file = convert_file_to_ogg(source_path)
+    audio_file.file.delete(save=False)
 
-    if ogg_file != source_path:
-        upload_to = os.path.dirname(audio_file.file.name)
-        filename = os.path.basename(ogg_file)
-        new_file = AudioFile()
-        new_file.file.name = os.path.join(upload_to, filename)
-        new_file.track = audio_file.track
-        new_file.full_clean()
-        new_file.save()
+post_delete.connect(delete_audio_files, sender=AudioFile)
 
-#post_save.connect(ogg_convert, sender=AudioFile)
-    
