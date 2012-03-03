@@ -81,6 +81,9 @@ class Track(models.Model):
 
     #TODO: Other attributes - genre, duration, isrc, etc.
 
+    DEFAULT_ARTIST = 'Unknown'
+    DEFAULT_TITLE = 'Unknown'
+
     def __unicode__(self):
         return u'%s' %self.title
 

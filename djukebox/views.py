@@ -93,7 +93,8 @@ def upload_track(request, hidden_frame=False):
         upload_form = TrackUploadForm(request.POST, request.FILES)
         if upload_form.is_valid():
             track = Track(user=request.user)
-            track.title = 'Test Track'
+            track.title = getattr(settings, 'DJUKEBOX_DEFAULT_TRACK_TITLE', Track.DEFAULT_TITLE)
+            track.artist = getattr(settings, 'DJUKEBOX_DEFAULT_ARTIST', Track.DEFAULT_ARTIST)
             track.full_clean()
             track.save()
 
@@ -140,7 +141,7 @@ def upload_track(request, hidden_frame=False):
             return HttpResponseRedirect(reverse('djukebox-homeframe'))
 
     else:
-        upload_form = SimpleTrackUploadForm()
+        upload_form = TrackUploadForm()
 
     return render_to_response(
         'djukebox/upload_track.html',

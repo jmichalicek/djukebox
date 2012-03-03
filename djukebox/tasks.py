@@ -15,10 +15,7 @@ logger = logging.getLogger(__name__)
 @task
 def convert_file_to_ogg(file_id):
     # TODO: make sure the file isn't already an ogg
-    try:
-        cls = settings.DJUKEBOX_OGG_CREATOR
-    except AttributeError:
-        cls = DEFAULT_MP3_TO_OGG
+    cls = getattr(settings, 'DJUKEBOX_OGG_CREATOR', DEFAULT_MP3_TO_OGG)
 
     logger.debug('Creating ogg from mp3 with module %s' %cls)
 
@@ -33,10 +30,7 @@ def convert_file_to_ogg(file_id):
 
 @task
 def convert_file_to_mp3(file_id):
-    try:
-        cls = settings.DJUKEBOX_MP3_CREATOR
-    except AttributeError:
-        cls = DEFAULT_OGG_TO_MP3
+    cls = getattr(settings, 'DJUKEBOX_OGG_CREATOR', DEFAULT_OGG_TO_MP3)
 
     logger.debug('Creating ogg from mp3 with module %s' %cls)
 
