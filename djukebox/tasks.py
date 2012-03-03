@@ -4,7 +4,7 @@ import importlib
 import logging
 from django.conf import settings
 from celery.task import task
-from models import AudioFile
+from models import AudioFile, Mp3File, OggFile
 
 DEFAULT_OGG_TO_MP3 = 'djukebox.converters.DjukeboxMp3FromOgg'
 DEFAULT_MP3_TO_OGG = 'djukebox.converters.DjukeboxOggFromMp3'
@@ -24,7 +24,7 @@ def convert_file_to_ogg(file_id):
 
     converter = class_from_string(cls)()
 
-    mp3_file = AudioFile.objects.get(id=file_id)
+    mp3_file = Mp3File.objects.get(id=file_id)
     logger.debug('Begin encoding ogg from AudioFile id %s' %mp3_file.id)
     ogg_file = converter.convert(mp3_file)
     logger.debug('Finished encoding ogg.  Created AudioFile id %s' %ogg_file.id)
@@ -42,7 +42,7 @@ def convert_file_to_mp3(file_id):
 
     converter = class_from_string(cls)()
 
-    ogg_file = AudioFile.objects.get(id=file_id)
+    ogg_file = OggFile.objects.get(id=file_id)
     logger.debug('Begin encoding mp3 from AudioFile id %s' %ogg_file.id)
     mp3_file = converter.convert(ogg_file)
     logger.debug('Finished encoding mp3.  Created AudioFile id %s' %mp3_file.id)

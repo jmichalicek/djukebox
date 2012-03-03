@@ -2,7 +2,7 @@ import os
 import subprocess
 import logging
 from django.conf import settings
-from models import AudioFile
+from models import AudioFile, Mp3File, OggFile
 
 logger = logging.getLogger(__name__)
 
@@ -33,7 +33,7 @@ class DjukeboxMp3FromOgg():
             subprocess.call([settings.DJUKEBOX_FFMPEG_BIN, '-i', source_path, target_filename])
 
         logger.debug('Finished encoding.  Saving AudioFile')
-        new_file = AudioFile(track=ogg_file.track)
+        new_file = Mp3File(track=ogg_file.track)
         new_file.file.name = os.path.join(media_directory, os.path.basename(target_filename))
         new_file.full_clean()
         new_file.save()
@@ -68,7 +68,7 @@ class DjukeboxOggFromMp3():
                              '-ac', '2', target_filename])
 
         logger.debug('Finished encoding.  Saving AudioFile')
-        new_file = AudioFile(track=mp3_file.track)
+        new_file = OggFile(track=mp3_file.track)
         new_file.file.name = os.path.join(media_directory, os.path.basename(target_filename))
         new_file.full_clean()
         new_file.save()

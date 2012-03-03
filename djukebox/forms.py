@@ -2,7 +2,7 @@ from django import forms
 from django.conf import settings
 from models import AudioFile
 
-class SimpleTrackUploadForm(forms.ModelForm):
+class TrackUploadForm(forms.Form):
     file = forms.FileField(label='Select a song to upload')
 
     def clean_file(self):
@@ -22,7 +22,3 @@ class SimpleTrackUploadForm(forms.ModelForm):
             else:
                 raise forms.ValidationError('File type is not supported: %s' %file_type)
         return data
-
-    class Meta:
-        model = AudioFile
-        exclude = ('user', 'track')

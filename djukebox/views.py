@@ -6,8 +6,8 @@ from django.template import RequestContext
 from django.views.decorators.cache import cache_control, cache_page
 from django.http import Http404, HttpResponseRedirect, HttpResponse
 
-from models import Album, Artist, Track, AudioFile
-from forms import SimpleTrackUploadForm
+from models import Album, Artist, Track, AudioFile, OggFile, Mp3File
+from forms import TrackUploadForm
 from tasks import convert_file_to_ogg
 
 
@@ -43,7 +43,10 @@ def artist_list(request):
 def audio_player(request, track_id, format):
     # This is obviously a terrible way to get the correct file format.  A format attribute will probably be added
     # to the AudioFile model
-    track = get_object_or_404(AudioFile, track__id=track_id, track__user=request.user, file__icontains=format)
+    if format.lower() == 'mp3':
+        track = get_object_or_404(Mp3File, track__id=track_id, track__user=request.user)
+    elif format.lower() == 'ogg':
+        track = get_object_or_404(OggFile, track__id=track_id, track__user=request.user)
 
     file_path = os.path.join(settings.MEDIA_ROOT, track.file.name)
     # ogg files encoded with pysox seem to be getting a media type of (audio/ogg, none) as a tuple
@@ -87,13 +90,19 @@ def upload_track(request, hidden_frame=False):
     # TODO: this needs to deal with re-encoding tracks as mp3 and ogg and the Track model
     # probably also needs updated to deal with this
     if request.method == 'POST':
-        upload_form = SimpleTrackUploadForm(request.POST, request.FILES)
+        upload_form = TrackUploadForm(request.POST, request.FILES)
         if upload_form.is_valid():
-            audio_file = upload_form.save(commit=False)
             track = Track(user=request.user)
             track.title = 'Test Track'
             track.full_clean()
             track.save()
+
+            file_data = upload_form.cleaned_data['file']
+            # TODO: Add more flexibility for user to specify mp3 and ogg content types?
+            if file_data.content_type in AudioFile.MP3_CONTENT_TYPES:
+                audio_file = Mp3File(file=file_data)
+            if file_data.content_type in AudioFile.OGG_CONTENT_TYPES:
+                audio_file = OggFile(file=file_data)
 
             audio_file.track = track
             audio_file.full_clean()

@@ -5,6 +5,8 @@ from django.conf import settings
 
 import os
 
+from mutagen.easyid3 import EasyID3
+
 class Album(models.Model):
     """The album which a track is from"""
     title = models.CharField(max_length=100)
@@ -27,8 +29,48 @@ class AudioFile(models.Model):
     track = models.ForeignKey('Track', db_index=True)
     file = models.FileField(upload_to='djukebox/tracks/%Y/%m/%d/')
 
+    MP3_CONTENT_TYPES = ('audio/mp3', 'audio/mpeg')
+    OGG_CONTENT_TYPES = ('audio/ogg',)
+
     def __unicode__(self):
         return u'%s' %self.file.name
+
+class Mp3File(AudioFile):
+    """An mp3 audio file"""
+    def get_id3_data(self):
+        pass
+
+    def get_title(self):
+        """Get the title from the file's id3 tag"""
+        file_path = os.path.join(setting.MEDIA_ROOT, self.file.name)
+        id3 = EasyID3(file_path)
+        return id3['title']
+
+    def get_artist(self):
+        """Get the artist from the file's id3 tag"""
+        # Should this be an object attribute rather than dong this every
+        # time an attribute is needed from the id3?
+        file_path = os.path.join(setting.MEDIA_ROOT, self.file.name)
+        id3 = EasyID3(file_path)
+        return id3['performer']
+
+    def get_album(self):
+        """Get the album from the file's id3 tag"""
+        file_path = os.path.join(setting.MEDIA_ROOT, self.file.name)
+        id3 = EasyID3(file_path)
+        return id3['album']
+
+class OggFile(AudioFile):
+    """An ogg-vorbis audio file"""
+    def get_title(self):
+        pass
+
+    def get_artist(self):
+        pass
+
+    def get_album(self):
+        pass
+
 
 class Track(models.Model):
     """A specific audio track or song"""
@@ -47,4 +89,3 @@ def delete_audio_files(sender, **kwargs):
     audio_file.file.delete(save=False)
 
 post_delete.connect(delete_audio_files, sender=AudioFile)
-
