@@ -1,7 +1,10 @@
 import os
 import subprocess
+import logging
 from django.conf import settings
 from models import AudioFile
+
+logger = logging.getLogger(__name__)
 
 class DjukeboxMp3FromOgg():
     """Create mp3 files from ogg files."""
@@ -22,11 +25,14 @@ class DjukeboxMp3FromOgg():
         #DJUKEBOX_FFMPEG_BIN = '/usr/bin/ffmpeg'
 
         if settings.DJUKEBOX_AUDIO_ENCODER == 'sox':
+            logger.debug('Converting %s to %s using sox' %(source_path, target_filename))
             subprocess.call([settings.DJUKEBOX_SOX_BIN, source_path, target_filename])
         if settings.DJUKEBOX_AUDIO_ENCODER == 'ffmpeg':
             # have not tested this yet.
+            logger.debug('Converting %s to %s using ffmpeg' %(source_path, target_filename))
             subprocess.call([settings.DJUKEBOX_FFMPEG_BIN, '-i', source_path, target_filename])
 
+        logger.debug('Finished encoding.  Saving AudioFile')
         new_file = AudioFile(track=ogg_file.track)
         new_file.file.name = os.path.join(media_directory, os.path.basename(target_filename))
         new_file.full_clean()
@@ -53,11 +59,15 @@ class DjukeboxOggFromMp3():
         #DJUKEBOX_FFMPEG_BIN = '/usr/bin/ffmpeg'
 
         if settings.DJUKEBOX_AUDIO_ENCODER == 'sox':
+            logger.debug('Converting %s to %s using sox' %(source_path, target_filename))
             subprocess.call([settings.DJUKEBOX_SOX_BIN, source_path, target_filename])
         if settings.DJUKEBOX_AUDIO_ENCODER == 'ffmpeg':
             # have not tested this yet.
-            subprocess.call([settings.DJUKEBOX_FFMPEG_BIN, '-i', source_path, '-acodec', 'vorbis', target_filename])
+            logger.debug('Converting %s to %s using ffmpeg' %(source_path, target_filename))
+            subprocess.call([settings.DJUKEBOX_FFMPEG_BIN, '-i', source_path, '-acodec', 'vorbis', 
+                             '-ac', '2', target_filename])
 
+        logger.debug('Finished encoding.  Saving AudioFile')
         new_file = AudioFile(track=mp3_file.track)
         new_file.file.name = os.path.join(media_directory, os.path.basename(target_filename))
         new_file.full_clean()
