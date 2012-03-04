@@ -29,11 +29,11 @@ def album_list(request):
 @login_required
 def artist_list(request):
     """View providing a list of a user's artists."""
-    albums = Album.objects.filter(user=request.user)
+    artists = Artist.objects.filter(user=request.user)
 
     return render_to_response(
         'djukebox/artist_list.html',
-        {'albums': albums,},
+        {'artists': artists,},
         context_instance=RequestContext(request)
     )
 
