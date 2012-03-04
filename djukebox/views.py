@@ -92,9 +92,11 @@ def upload_track(request, hidden_frame=False):
     if request.method == 'POST':
         upload_form = TrackUploadForm(request.POST, request.FILES)
         if upload_form.is_valid():
+            default_track_title = getattr(settings, 'DJUKEBOX_DEFAULT_TRACK_TITLE', Track.DEFAULT_TITLE)
+            default_artist = getattr(settings, 'DJUKEBOX_DEFAULT_ARTIST', Artist.DEFAULT_ARTIST)
+
             track = Track(user=request.user)
-            track.title = getattr(settings, 'DJUKEBOX_DEFAULT_TRACK_TITLE', Track.DEFAULT_TITLE)
-            track.artist = getattr(settings, 'DJUKEBOX_DEFAULT_ARTIST', Track.DEFAULT_ARTIST)
+            track.title = default_track_title
             track.full_clean()
             track.save()
 
@@ -108,6 +110,19 @@ def upload_track(request, hidden_frame=False):
             audio_file.track = track
             audio_file.full_clean()
             audio_file.save()
+
+            # Now that the physical file has been written, read the metadata
+            track.title = (audio_file.get_title() if audio_file.get_title != '' else default_track_title)
+
+            album = Album.album_from_metadata(audio_file)
+            album.full_clean()
+            album.save()
+
+            track.album = album
+            track.full_clean()
+            track.save()
+
+            #TODO: Set artist on Track()
 
             # Now that this is saved, make sure the file really is a valid filetype
             # and kill it if it's not.  The track upload form validates the http content-type header
