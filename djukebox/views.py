@@ -8,11 +8,14 @@ from django.http import Http404, HttpResponseRedirect, HttpResponse
 
 from models import Album, Artist, Track, AudioFile, OggFile, Mp3File
 from forms import TrackUploadForm
-from tasks import convert_file_to_ogg
+from tasks import convert_file_to_ogg, convert_file_to_mp3
 
 
 import os
 import mimetypes
+import logging
+
+logger = logging.getLogger(__name__)
 
 @login_required
 def album_list(request):
@@ -103,8 +106,10 @@ def upload_track(request, hidden_frame=False):
             file_data = upload_form.cleaned_data['file']
             # TODO: Add more flexibility for user to specify mp3 and ogg content types?
             if file_data.content_type in AudioFile.MP3_CONTENT_TYPES:
+                logger.debug('mp3 file was uploaded')
                 audio_file = Mp3File(file=file_data)
             if file_data.content_type in AudioFile.OGG_CONTENT_TYPES:
+                logger.debug('ogg file was uploaded')
                 audio_file = OggFile(file=file_data)
 
             audio_file.track = track
@@ -112,7 +117,8 @@ def upload_track(request, hidden_frame=False):
             audio_file.save()
 
             # Now that the physical file has been written, read the metadata
-            track.title = (audio_file.get_title() if audio_file.get_title != '' else default_track_title)
+            new_title = audio_file.get_title()
+            track.title = (new_title if new_title != '' else default_track_title)
 
             album = Album.album_from_metadata(audio_file)
             album.full_clean()
@@ -133,9 +139,10 @@ def upload_track(request, hidden_frame=False):
                 json_response_data = '{"track_upload": {"status": "error", "error": "invalid file type %s"}}' %mimetype
                 audio_file.delete()
                 track.delete()
+                logger.warn('mimetypes.guess_type detected different content type than http header specified')
             else:
                 if mimetype == 'audio/ogg':
-                    create_mp3_file(track=track, ogg_file=audio_file)
+                    convert_file_to_mp3.delay(audio_file.id)
                 elif mimetype in ('audio/mp3', 'audio/mpeg'):
                     convert_file_to_ogg.delay(audio_file.id)
                     # TODO: make this dependent upon settings.py settings

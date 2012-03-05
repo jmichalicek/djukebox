@@ -4,10 +4,13 @@ from django.db.models.signals import post_delete
 from django.conf import settings
 
 import os
+import logging
 
 from mutagen.easyid3 import EasyID3
 from mutagen.id3 import ID3
 from mutagen.oggvorbis import OggVorbis
+
+logger = logging.getLogger(__name__)
 
 class Album(models.Model):
     """The album which a track is from"""
@@ -123,19 +126,19 @@ class OggFile(AudioFile):
         """Return the title from Vorbis comments."""
         file_path = os.path.join(settings.MEDIA_ROOT, self.file.name)
         tags = OggVorbis(file_path)
-        return tags.get('title', '').strip()
+        return tags.get('title', [''])[0].strip()
 
     def get_artist(self):
         """Return the artist rom Vorbis comments."""
         file_path = os.path.join(settings.MEDIA_ROOT, self.file.name)
         tags = OggVorbis(file_path)
-        return tags.get('artist', '').strip()
+        return tags.get('artist', [''])[0].strip()
 
     def get_album(self):
         """Return the album from Vorbis comments."""
         file_path = os.path.join(settings.MEDIA_ROOT, self.file.name)
         tags = OggVorbis(file_path)
-        return tags.get('album', '').strip()
+        return tags.get('album', [''])[0].strip()
 
     def get_album_artist(self):
         """Return the album artist (performer) from Vorbis comments."""
