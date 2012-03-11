@@ -65,14 +65,14 @@ class AudioFile(models.Model):
     file = models.FileField(upload_to='djukebox/tracks/%Y/%m/%d/')
     created = models.DateTimeField(db_index=True, auto_now_add=True, blank=True)
 
-    MP3_CONTENT_TYPES = ('audio/mp3', 'audio/mpeg')
-    OGG_CONTENT_TYPES = ('audio/ogg',)
-
     def __unicode__(self):
         return u'%s' %self.file.name
 
 class Mp3File(AudioFile):
     """An mp3 audio file"""
+
+    DEFAULT_CONTENT_TYPES = ('audio/mpeg', 'audio/mp3')
+
     def get_id3_data(self):
         pass
 
@@ -116,12 +116,17 @@ class Mp3File(AudioFile):
         # I bet this blows up, but have no test at the moment
         # artist is probably a tuple
         return artist.text[0].strip()
+
+    @models.permalink
+    def get_stream_url(self):
+        return ('djukebox-stream-mp3', [str(self.track.id)])
+
         
 
 class OggFile(AudioFile):
     """An ogg-vorbis audio file"""
 
-    # TODO: None of this has been tested at all
+    DEFAULT_CONTENT_TYPES = ('audio/ogg',)
     def get_title(self):
         """Return the title from Vorbis comments."""
         file_path = os.path.join(settings.MEDIA_ROOT, self.file.name)
@@ -145,6 +150,10 @@ class OggFile(AudioFile):
         file_path = os.path.join(settings.MEDIA_ROOT, self.file.name)
         tags = OggVorbis(file_path)
         return tags.get('performer', '').strip()
+    
+    @models.permalink
+    def get_stream_url(self):
+        return ('djukebox-stream-ogg', [str(self.track.id)])
 
 class Track(models.Model):
     """A specific audio track or song"""

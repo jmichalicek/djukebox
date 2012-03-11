@@ -1,5 +1,6 @@
 from django.contrib.auth.decorators import login_required
 from django.core.urlresolvers import reverse
+from django.core.exceptions import ObjectDoesNotExist
 from django.conf import settings
 from django.shortcuts import render_to_response, get_object_or_404
 from django.template import RequestContext
@@ -14,8 +15,34 @@ from tasks import convert_file_to_ogg, convert_file_to_mp3
 import os
 import mimetypes
 import logging
+import simplejson
 
 logger = logging.getLogger(__name__)
+
+@login_required
+def track_stream_list(request, track_id=None):
+    """Return available stream urls for a track."""
+
+    # Does it matter if it's ajax currently?
+    if request.is_ajax():
+        track = get_object_or_404(Track, id=track_id, user=request.user)
+        json_response_data = {}
+
+        # Do this the simplest way for now.  Will be troublesome if there's a reason to play
+        # some other file type.
+        try:
+            mp3 = Mp3File.objects.get(track=track)
+            json_response_data['mp3'] = mp3.get_stream_url()
+        except ObjectDoesNotExist:
+            json_response_data['mp3'] = ''
+
+        try:
+            ogg = OggFile.objects.get(track=track)
+            json_response_data['ogg'] = ogg.get_stream_url()
+        except ObjectDoesNotExist:
+            json_response_data['ogg'] = ''
+
+        return HttpResponse(simplejson.dumps(json_response_data), mimetype='application/json')
 
 @login_required
 def album_list(request):
@@ -103,12 +130,15 @@ def upload_track(request, hidden_frame=False):
             track.full_clean()
             track.save()
 
+            mp3_content_types = getattr(settings, 'DJUKEBOX_MP3_CONTENT_TYPES', Mp3File.DEFAULT_CONTENT_TYPES)
+            ogg_content_types = getattr(settings, 'DJUKEBOX_OGG_CONTENT_TYPES', OggFile.DEFAULT_CONTENT_TYPES)
+
             file_data = upload_form.cleaned_data['file']
             # TODO: Add more flexibility for user to specify mp3 and ogg content types?
-            if file_data.content_type in AudioFile.MP3_CONTENT_TYPES:
+            if file_data.content_type in mp3_content_types:
                 logger.debug('mp3 file was uploaded')
                 audio_file = Mp3File(file=file_data)
-            if file_data.content_type in AudioFile.OGG_CONTENT_TYPES:
+            if file_data.content_type in ogg_content_types:
                 logger.debug('ogg file was uploaded')
                 audio_file = OggFile(file=file_data)
 

@@ -3,6 +3,9 @@
 <script type="text/javascript">
 /* This could maybe be done better to pop up overlapping alerts or something */
 $(document).ready(function() {
+    var eventMethod = window.addEventListener ? "addEventListener" : "attachEvent";
+    var eventer = window[eventMethod];
+
     $("#track_upload").load(function() {
         var json = jQuery.parseJSON($('#track_upload').contents().text());
 
@@ -16,6 +19,73 @@ $(document).ready(function() {
         }
         $('#upload_status_alert').show();
     });
+
+
+    change_track_listener = function(e) {
+       var track = e.data;
+        var request_url = "{% url djukebox-list-streams %}" + track + "/";
+
+        $.ajax({
+          type: "POST",
+          url: request_url,
+          data: "",
+          dataType: "json",
+          success: function(data) {
+            if(data.ogg) {
+                $("#ogg_source").attr('src', data.ogg).detach().appendTo($("#audio_player"))
+            }
+
+            if(data.mp3) {
+                $("#mp3_source").attr('src', data.mp3).detach().appendTo($("#audio_player"))
+            }
+            
+            //firefox html5 audio player is buggy.  This makes it slightly less buggy - if you
+            //start playing, then start playing again, it'll stay visible by using this.
+            $("#audio_player").detach().appendTo($("#audio_player_div"))
+          }
+        })
+      }
+
+
+    eventer("message", change_track_listener, false);
+});
+
+//special csrf stuff
+jQuery(document).ajaxSend(function(event, xhr, settings) {
+    function getCookie(name) {
+        var cookieValue = null;
+        if (document.cookie && document.cookie != '') {
+            var cookies = document.cookie.split(';');
+            for (var i = 0; i < cookies.length; i++) {
+                var cookie = jQuery.trim(cookies[i]);
+                // Does this cookie string begin with the name we want?
+                if (cookie.substring(0, name.length + 1) == (name + '=')) {
+                    cookieValue = decodeURIComponent(cookie.substring(name.length + 1));
+                    break;
+                }
+            }
+        }
+        return cookieValue;
+    }
+    function sameOrigin(url) {
+        // url could be relative or scheme relative or absolute
+        var host = document.location.host; // host + port
+        var protocol = document.location.protocol;
+        var sr_origin = '//' + host;
+        var origin = protocol + sr_origin;
+        // Allow absolute or scheme relative URLs to same origin
+        return (url == origin || url.slice(0, origin.length + 1) == origin + '/') ||
+            (url == sr_origin || url.slice(0, sr_origin.length + 1) == sr_origin + '/') ||
+            // or any other URL that isn't scheme relative or absolute i.e relative.
+            !(/^(\/\/|http:|https:).*/.test(url));
+    }
+    function safeMethod(method) {
+        return (/^(GET|HEAD|OPTIONS|TRACE)$/.test(method));
+    }
+
+    if (!safeMethod(settings.type) && sameOrigin(settings.url)) {
+        xhr.setRequestHeader("X-CSRFToken", getCookie('csrftoken'));
+    }
 });
 </script>
 {% endblock %}
@@ -36,7 +106,7 @@ $(document).ready(function() {
     </div>
   </div>
   <div class="row-fluid" id="audio_player_div">
-    <audio id="audio_player" preload="auto" controls>
+    <audio id="audio_player" preload="auto" controls="controls" autoplay="">
       <source id="ogg_source" type="audio/ogg" />
       <source id="mp3_source" type="audio/mp3" />
     </audio>

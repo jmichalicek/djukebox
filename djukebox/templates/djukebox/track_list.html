@@ -17,18 +17,23 @@ $(document).ready(function() {
     var ogg_stream_list = [];
     var mp3_stream_list = [];
     {% for track in tracks %}
-    ogg_stream_list[{{ track.id }}] = "{% url djukebox-stream-ogg  track.id %}";
-    mp3_stream_list[{{ track.id }}] = "{% url djukebox-stream-mp3  track.id %}";
+    //ogg_stream_list[{{ track.id }}] = "{% url djukebox-stream-ogg  track.id %}";
+    //mp3_stream_list[{{ track.id }}] = "{% url djukebox-stream-mp3  track.id %}";
     {% endfor %}
+
+    $('.track_item').dblclick(function() {
+        parent.postMessage(this.id, "http://" + window.location.hostname);
+    });
+/*
     $(".track_item").dblclick(function() {
         parent.$("#ogg_source").attr('src', ogg_stream_list[this.id]).detach().appendTo(parent.$("#audio_player"))
         parent.$("#mp3_source").attr('src', mp3_stream_list[this.id]).detach().appendTo(parent.$("#audio_player"))
-        /* This doesn't seem to be needed by opera at all.  For some reason with firefox without it, it doesn't
-           work in any manner.  With this line, if you double click twice it works, but the first time it detaches
-           and never re-appears
-        */
+        // This doesn't seem to be needed by opera at all.  For some reason with firefox without it, it doesn't
+        //   work in any manner.  With this line, if you double click twice it works, but the first time it detaches
+        //   and never re-appears
+        
         parent.$("#audio_player").detach().appendTo(parent.$("#audio_player_div"))
-    });
+    }); */
 });
 </script>
 {% endblock %}
