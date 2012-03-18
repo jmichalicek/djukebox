@@ -18,6 +18,9 @@ DJUKEBOX_MP3_CONTENT_TYPES = ('audio/mp3', 'audio/mpeg')
 DJUKEBOX_OGG_CONTENT_TYPES = ('audio/ogg',)
 DJUKEBOX_DEFAULT_TRACK_TITLE = 'Unknown Track'
 # default album, artist, etc. will be added shortly
+DJUKEBOX_USE_MEDIA_URL = True # Defaults to False.  If True, content will be streamed from
+# settings.MEDIA_URL rather than the stream view.  This is lighter weight, but less secure since
+# it requires you to expose the raw audio files
 
 # These two are likely to change to allow more flexibility for uploading other file types
 # and converting them to ogg or mp3 as well

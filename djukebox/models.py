@@ -1,5 +1,6 @@
 from django.db import models
 from django.contrib.auth.models import User
+from django.core.urlresolvers import reverse
 from django.db.models.signals import post_delete
 from django.conf import settings
 
@@ -33,8 +34,8 @@ class Album(models.Model):
     def album_from_metadata(cls, audio_file):
         """Get the Album() from the audio file's metadata."""
         user = audio_file.track.user
-        default_title = getattr(settings, 'DEFAULT_ALBUM_TITLE', Album.DEFAULT_TITLE)
-        default_artist = getattr(settings, 'DEFAULT_ARTIST', Album.DEFAULT_ARTIST)
+        default_title = getattr(settings, 'DJUKEBOX_DEFAULT_ALBUM_TITLE', Album.DEFAULT_TITLE)
+        default_artist = getattr(settings, 'DJUKEBOX_DEFAULT_ARTIST', Album.DEFAULT_ARTIST)
 
         album_title = (audio_file.get_album() if audio_file.get_album() != '' else default_title)
         # Try getting the album artist first
@@ -117,9 +118,14 @@ class Mp3File(AudioFile):
         # artist is probably a tuple
         return artist.text[0].strip()
 
-    @models.permalink
     def get_stream_url(self):
-        return ('djukebox-stream-mp3', [str(self.track.id)])
+        use_media_url = getattr(settings, 'DJUKEBOX_USE_MEDIA_URL', False)
+        if use_media_url:
+            url = '%s%s' %(settings.MEDIA_URL, self.file.name)
+        else:
+            url =  reverse('djukebox-stream-mp3', args=[str(self.track.id)])
+
+        return url
 
         
 
@@ -151,9 +157,14 @@ class OggFile(AudioFile):
         tags = OggVorbis(file_path)
         return tags.get('performer', '').strip()
     
-    @models.permalink
     def get_stream_url(self):
-        return ('djukebox-stream-ogg', [str(self.track.id)])
+        use_media_url = getattr(settings, 'DJUKEBOX_USE_MEDIA_URL', False)
+        if use_media_url:
+            url = '%s%s' %(settings.MEDIA_URL, self.file.name)
+        else:
+            url = reverse('djukebox-stream-ogg', args=[str(self.track.id)])
+
+        return url
 
 class Track(models.Model):
     """A specific audio track or song"""
