@@ -1,11 +1,16 @@
 {% extends 'djukebox/base.html' %}
 {% block body %}
-<div class="container">
-  {% for track in tracks %}
-  <div id="{{ track.id }}" class="thumbnail track_item">
+<div class="thumbnail">
+<!-- album art to go here -->
+<h5>{{ album.title }}</h5><br />
+<p>{{ album.artist }} <!-- other album details --></p>
+</div>
+<div class="span5">
+{% for track in tracks %}
+ <div id="{{ track.id }}" class="thumbnail track_item">
     <span>{{ track }}</span>
   </div>
-  {% endfor %}
+{% endfor %}
 </div>
 
 <script type="text/javascript">

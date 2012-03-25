@@ -3,7 +3,7 @@
 <div class="container">
   {% for album in albums %}
   <div class="thumbnail">
-    <span>{{ album }}</span>
+    <span><a href="{% url djukebox-album album.id %}">{{ album }}</a></span>
   </div>
   {% endfor %}
 </div>

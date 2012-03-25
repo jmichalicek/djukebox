@@ -11,7 +11,6 @@ from models import Album, Artist, Track, AudioFile, OggFile, Mp3File
 from forms import TrackUploadForm
 from tasks import convert_file_to_ogg, convert_file_to_mp3
 
-
 import os
 import mimetypes
 import logging
@@ -45,6 +44,19 @@ def track_stream_list(request, track_id=None):
         return HttpResponse(simplejson.dumps(json_response_data), mimetype='application/json')
 
 @login_required
+def album_songs(request, album_id):
+    """View displaying the tracks on an album"""
+    album = get_object_or_404(Album, id=album_id, user=request.user)
+    tracks = Track.objects.filter(album=album)
+
+    return render_to_response(
+        'djukebox/album_songs.html',
+        {'album': album,
+         'tracks': tracks},
+        context_instance=RequestContext(request)
+        )
+
+@login_required
 def album_list(request):
     """View providing a list of a user's albums"""
     albums = Album.objects.filter(user=request.user)
@@ -53,7 +65,7 @@ def album_list(request):
         'djukebox/album_list.html',
         {'albums': albums,},
         context_instance=RequestContext(request)
-    )
+        )
 
 
 @login_required
@@ -65,7 +77,7 @@ def artist_list(request):
         'djukebox/artist_list.html',
         {'artists': artists,},
         context_instance=RequestContext(request)
-    )
+        )
 
 
 @cache_control(no_cache=True)
