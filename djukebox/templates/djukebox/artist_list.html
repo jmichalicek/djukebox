@@ -3,7 +3,7 @@
 <div class="container">
   {% for artist in artists %}
   <div class="thumbnail">
-    <span>{{ artist }}</span>
+    <span><a href="{% url djukebox-artist artist.id%}">{{ artist }}</a></span>
   </div>
   {% endfor %}
 </div>

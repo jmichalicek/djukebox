@@ -1,0 +1,33 @@
+{% extends 'djukebox/base.html' %}
+{% block body %}
+<div class="span2 thumbnail" style="height: 25%">
+<!-- album art to go here -->
+<h5>{{ artist.name }}</h5><br />
+</div>
+<div class="span10">
+  <table class="table table-bordered">
+    {% for album in albums %}
+    <tr>
+      <td rowspan="{{ album.track_set.all|length  }}">
+          {{ album.title }}
+          {# album art will go here #}
+      </td>
+    {% for track in album.track_set.all %}
+    {% if not forloop.first %}<tr>{% endif %}
+      <td id="{{ track.id }}">
+        <span>{{ track }}</span>
+      </td>
+    </tr>
+    {% endfor %}
+    {% endfor %}
+  </table>
+</div>
+
+<script type="text/javascript">
+$(document).ready(function() {
+    $('.track_item').dblclick(function() {
+        parent.postMessage(this.id, "http://" + window.location.hostname);
+    });
+});
+</script>
+{% endblock body %}

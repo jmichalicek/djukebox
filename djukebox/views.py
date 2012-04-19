@@ -79,6 +79,19 @@ def artist_list(request):
         context_instance=RequestContext(request)
         )
 
+@login_required
+def artist_discography(request, artist_id):
+    """View providing a list of songs and albums by a specific artist."""
+    
+    artist = get_object_or_404(Artist, id=artist_id)
+    albums = Album.objects.filter(artist=artist)
+
+    return render_to_response(
+        'djukebox/discography.html',
+        {'artist': artist,
+         'albums': albums},
+        context_instance=RequestContext(request)
+        )
 
 @cache_control(no_cache=True)
 @login_required
