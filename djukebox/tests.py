@@ -113,3 +113,16 @@ class OggFileUnitTests(TestCase):
 
 class Mp3FileUnitTests(TestCase):
     pass
+
+class FileConversionUnitTests(TestCase):
+    def test_convert_file_to_ogg_task(self):
+        pass
+
+    def test_convert_file_to_mp3_task(self):
+        pass
+
+    def test_DjukeboxMp3FromOgg(self):
+        pass
+
+    def test_DjukeboxOggFromMp3(self):
+        pass
