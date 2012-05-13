@@ -13,8 +13,9 @@
           {# album art will go here #}
       </td>
     {% for track in album.track_set.all %}
+      {# track.id and track_item may be better on the tr? #}
     {% if not forloop.first %}<tr>{% endif %}
-      <td id="{{ track.id }}">
+      <td id="{{ track.id }}" class="track_item">
         <span>{{ track }}</span>
       </td>
     </tr>
