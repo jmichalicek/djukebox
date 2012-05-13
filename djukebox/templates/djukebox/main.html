@@ -22,7 +22,7 @@ $(document).ready(function() {
 
 
     change_track_listener = function(e) {
-       var track = e.data;
+        var track = e.data;
         var request_url = "{% url djukebox-list-streams %}" + track + "/";
 
         $.ajax({
@@ -31,19 +31,43 @@ $(document).ready(function() {
           data: "",
           dataType: "json",
           success: function(data) {
+          {% comment %}
+          This used to work with detach(), but sometime recently
+          that broke in both opera and firefox (ff12) although still worked
+          in Chrome.  A full remove() and re add works right in opera and chrome
+          but firefox is still buggy and gets stuck playing the same song
+          over and over even though the dom elements show as updated in
+          firebug and dragonfly
+          {% endcomment %}
+            $("#audio_player").remove();
+
+            var player = $("<audio>", {
+              id: "audio_player",
+              controls: "controls",
+              preload: "auto"
+            });
+
             if(data.ogg) {
-                $("#ogg_source").attr('src', data.ogg).detach().appendTo($("#audio_player"))
+                var ogg = $("<source>", {
+                    id: "ogg_source",
+                    type: "audio/ogg",
+                    src: data.ogg
+                });
+                ogg.appendTo(player);
             }
 
             if(data.mp3) {
-                $("#mp3_source").attr('src', data.mp3).detach().appendTo($("#audio_player"))
+                var mp3 = $("<source>", {
+                    id: "mp3_source",
+                    type: "audio/mp3",
+                    src: data.mp3
+                });
+                mp3.appendTo(player);
             }
-            
-            //firefox html5 audio player is buggy.  This makes it slightly less buggy - if you
-            //start playing, then start playing again, it'll stay visible by using this.
-            $("#audio_player").detach().appendTo($("#audio_player_div"))
-           }
-        })
+
+	    player.appendTo($("#audio_player_div"));
+           };
+        });
       };
 
 
