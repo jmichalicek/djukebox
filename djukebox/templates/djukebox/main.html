@@ -42,9 +42,9 @@ $(document).ready(function() {
             //firefox html5 audio player is buggy.  This makes it slightly less buggy - if you
             //start playing, then start playing again, it'll stay visible by using this.
             $("#audio_player").detach().appendTo($("#audio_player_div"))
-          }
+           }
         })
-      }
+      };
 
 
     eventer("message", change_track_listener, false);

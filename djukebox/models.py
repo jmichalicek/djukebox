@@ -8,7 +8,7 @@ import os
 import logging
 
 from mutagen.easyid3 import EasyID3
-from mutagen.id3 import ID3
+from mutagen.id3 import ID3, TPE2
 from mutagen.oggvorbis import OggVorbis
 
 logger = logging.getLogger(__name__)
@@ -85,11 +85,12 @@ class Mp3File(AudioFile):
 
     def get_artist(self):
         """Get the artist from the file's id3 tag"""
-        # Should this be an object attribute rather than dong this every
+        # Should this be an object attribute rather than doing this every
         # time an attribute is needed from the id3?
         file_path = os.path.join(settings.MEDIA_ROOT, self.file.name)
         id3 = EasyID3(file_path)
-        return id3.get('performer', ['']).strip()
+        #performer = id3.get('performer', [''])
+        return id3.get('performer', [''])[0].strip()
 
     def get_album(self):
         """Get the album from the file's id3 tag"""
@@ -108,14 +109,14 @@ class Mp3File(AudioFile):
         file_path = os.path.join(settings.MEDIA_ROOT, self.file.name)
         id3 = ID3(file_path)
         
-        # These really need to default to an empty TPE2()
-        if id3['TPE2'] != '':
-            artist = id3.get('TPE2', None)
-        else:
+        # I really need to find a cleaner way of doing this
+        artist = id3.get('TPE2', None)
+        if artist is None:
             artist = id3.get('TP2', None)
+            if artist is None:
+                artist = TPE2()
+                artist.text.append('')
 
-        # I bet this blows up, but have no test at the moment
-        # artist is probably a tuple
         return artist.text[0].strip()
 
     def get_stream_url(self):

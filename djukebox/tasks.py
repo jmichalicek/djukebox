@@ -1,13 +1,11 @@
-import os
-import subprocess
 import importlib
 import logging
 from django.conf import settings
 from celery.task import task
 from models import AudioFile, Mp3File, OggFile
 
-DEFAULT_OGG_TO_MP3 = 'djukebox.converters.DjukeboxMp3FromOgg'
-DEFAULT_MP3_TO_OGG = 'djukebox.converters.DjukeboxOggFromMp3'
+DEFAULT_OGG_TO_MP3 = 'djukebox.converters.FFMpegOggToMp3'
+DEFAULT_MP3_TO_OGG = 'djukebox.converters.FFMpegMp3ToOgg'
 
 logger = logging.getLogger(__name__)
 
@@ -15,8 +13,7 @@ logger = logging.getLogger(__name__)
 @task
 def convert_file_to_ogg(file_id):
     # TODO: make sure the file isn't already an ogg
-    cls = getattr(settings, 'DJUKEBOX_OGG_CREATOR', DEFAULT_MP3_TO_OGG)
-
+    cls = getattr(settings, 'DJUKEBOX_MP3_TO_OGG', DEFAULT_MP3_TO_OGG)
     logger.debug('Creating ogg from mp3 with module %s' %cls)
 
     converter = class_from_string(cls)()
@@ -30,8 +27,7 @@ def convert_file_to_ogg(file_id):
 
 @task
 def convert_file_to_mp3(file_id):
-    cls = getattr(settings, 'DJUKEBOX_OGG_CREATOR', DEFAULT_OGG_TO_MP3)
-
+    cls = getattr(settings, 'DJUKEBOX_OGG_TO_MP3', DEFAULT_OGG_TO_MP3)
     logger.debug('Creating ogg from mp3 with module %s' %cls)
 
     converter = class_from_string(cls)()

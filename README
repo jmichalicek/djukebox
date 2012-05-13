@@ -24,8 +24,16 @@ DJUKEBOX_USE_MEDIA_URL = True # Defaults to False.  If True, content will be str
 
 # These two are likely to change to allow more flexibility for uploading other file types
 # and converting them to ogg or mp3 as well
-DJUKEBOX_OGG_CREATOR = 'full.package.name.of.custom.ogg.encoder'
-DJUKEBOX_MP3_CREATOR = 'full.package.name.of.custom.mp3.encoder'
+DJUKEBOX_MP3_TO_OGG = 'full.package.name.of.custom.ogg.encoder'
+DJUKEBOX_OGG_TO_MP3 = 'full.package.name.of.custom.mp3.encoder'
+# Encoders to go mp3 to ogg and ogg to mp3 using sox, ffmpeg, and avconv are provided
+# ffmpeg has had frequent interface changes in the past and so may not work on your system
+# djukebox.converters.FFMpegMp3ToOgg
+# djukebox.converters.FFMpegOggToMp3
+# djukebox.converters.AvconvMp3ToOgg
+# djukebox.converters.AvconvOggToMp3
+# djukebox.converters.SoxMp3ToOgg
+# djukebox.converters.SoxOggToMp3
 
 FAQ (I have not actually been asked frequently or at all as this project has only existed a few days):
 
