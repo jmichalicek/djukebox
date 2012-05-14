@@ -96,8 +96,6 @@ def artist_discography(request, artist_id):
 @cache_control(no_cache=True)
 @login_required
 def audio_player(request, track_id, format):
-    # This is obviously a terrible way to get the correct file format.  A format attribute will probably be added
-    # to the AudioFile model
     if format.lower() == 'mp3':
         track = get_object_or_404(Mp3File, track__id=track_id, track__user=request.user)
     elif format.lower() == 'ogg':
@@ -196,6 +194,7 @@ def upload_track(request, hidden_frame=False):
                 track.delete()
                 logger.warn('mimetypes.guess_type detected different content type than http header specified')
             else:
+                # TODO: Why is this not checking if mimetype in ogg_mime_types and mp3_mime_types?
                 if mimetype == 'audio/ogg':
                     convert_file_to_mp3.delay(audio_file.id)
                 elif mimetype in ('audio/mp3', 'audio/mpeg'):
@@ -203,10 +202,12 @@ def upload_track(request, hidden_frame=False):
                     # TODO: make this dependent upon settings.py settings
 
                 #success!
+                logger.debug('Successfully uploaded track %s with id %s' %(track.title, track.id))
                 json_response_data = '{"track_upload": {"status": "sucess", "title": "%s"}}' %track.title
 
         else:
             # Get the errors in a cleaner way
+            logger.debug('{"track_upload": {"status": "error", "errors": %s}}' %upload_form.errors)
             json_response_data = '{"track_upload": {"status": "error", "errors": %s}}' %upload_form.errors
 
 
