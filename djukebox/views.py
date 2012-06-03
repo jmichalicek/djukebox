@@ -2,6 +2,7 @@ from django.contrib.auth.decorators import login_required
 from django.core.urlresolvers import reverse
 from django.core.exceptions import ObjectDoesNotExist
 from django.conf import settings
+from django.db import transaction
 from django.shortcuts import render_to_response, get_object_or_404
 from django.template import RequestContext
 from django.views.decorators.cache import cache_control, cache_page
@@ -96,15 +97,13 @@ def artist_discography(request, artist_id):
 @cache_control(no_cache=True)
 @login_required
 def audio_player(request, track_id, format):
-    if format.lower() == 'mp3':
-        track = get_object_or_404(Mp3File, track__id=track_id, track__user=request.user)
-    elif format.lower() == 'ogg':
-        track = get_object_or_404(OggFile, track__id=track_id, track__user=request.user)
-
+    # TODO: Rename this to stream_track?
+    # format is a callable, the class of audio file to play such as Mp3File or OggFile
+    track = get_object_or_404(format, track__id=track_id, track__user=request.user)
     file_path = os.path.join(settings.MEDIA_ROOT, track.file.name)
     # ogg files encoded with pysox seem to be getting a media type of (audio/ogg, none) as a tuple
     # which throws off firefox when it gets the content-type header.  Opera is ok with it, though.
-    # As a fix I am just grabbing the first one here
+    # As a fix I am just grabbing the first one here which seems to always work
     resp = HttpResponse(FileIterWrapper(open(file_path,"rb")), mimetype=mimetypes.guess_type(file_path)[0])
     resp['Content-Length'] = os.path.getsize(file_path)
     resp['Content-Disposition'] = 'filename=' + os.path.basename(file_path)  
@@ -138,8 +137,9 @@ def main(request):
     )
 
 @login_required
+@transaction.commit_on_success
 def upload_track(request, hidden_frame=False):
-
+    # TODO: break this up into smaller functions
     # TODO: this needs to deal with re-encoding tracks as mp3 and ogg and the Track model
     # probably also needs updated to deal with this
     if request.method == 'POST':
@@ -187,21 +187,20 @@ def upload_track(request, hidden_frame=False):
             # and kill it if it's not.  The track upload form validates the http content-type header
             # but does not actually check the file.
             mimetype = mimetypes.guess_type(os.path.join(settings.MEDIA_ROOT, audio_file.file.name))[0]
+            # Check allowed file types first.  We may want to only allow certain types
+            # even if the system can support others.
             if mimetype not in settings.DJUKEBOX_UPLOAD_FILE_TYPES:
                 # Delete the Track and AudioFile and return an error
                 json_response_data = '{"track_upload": {"status": "error", "error": "invalid file type %s"}}' %mimetype
                 audio_file.delete()
                 track.delete()
                 logger.warn('mimetypes.guess_type detected different content type than http header specified')
-            else:
-                # TODO: Why is this not checking if mimetype in ogg_mime_types and mp3_mime_types?
-                if mimetype == 'audio/ogg':
+            elif getattr(settings, 'DJUKEBOX_CONVERT_UPLOADS', True):
+                if mimetype in ogg_content_types:
                     convert_file_to_mp3.delay(audio_file.id)
-                elif mimetype in ('audio/mp3', 'audio/mpeg'):
+                elif mimetype in mp3_content_types:
                     convert_file_to_ogg.delay(audio_file.id)
-                    # TODO: make this dependent upon settings.py settings
 
-                #success!
                 logger.debug('Successfully uploaded track %s with id %s' %(track.title, track.id))
                 json_response_data = '{"track_upload": {"status": "sucess", "title": "%s"}}' %track.title
 

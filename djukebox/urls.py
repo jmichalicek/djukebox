@@ -1,5 +1,6 @@
 from django.conf.urls.defaults import *
 from views import *
+from models import Mp3File, OggFile
 
 urlpatterns = patterns('',
                        url(r'^home/', main, name='djukebox-home'),
@@ -13,8 +14,8 @@ urlpatterns = patterns('',
                        url(r'^artist/(?P<artist_id>\d+)/', artist_discography, name='djukebox-artist'),
                        url(r'^artist_list/', artist_list, name='djukebox-artistlist'),
                        url(r'^stream/(?P<format>\w+)/(?P<track_id>\d+)/', audio_player, name='djukebox-stream'),
-                       url(r'^stream/ogg/(?P<track_id>\d+)/', audio_player, {'format': 'ogg'}, name='djukebox-stream-ogg'),
-                       url(r'^stream/mp3/(?P<track_id>\d+)/', audio_player, {'format': 'mp3'}, name='djukebox-stream-mp3'),
+                       url(r'^stream/ogg/(?P<track_id>\d+)/', audio_player, {'format': OggFile}, name='djukebox-stream-ogg'),
+                       url(r'^stream/mp3/(?P<track_id>\d+)/', audio_player, {'format': Mp3File}, name='djukebox-stream-mp3'),
                        url(r'^track_list/', track_list, name='djukebox-tracklist'),
                        url(r'^upload_track/', upload_track, name='djukebox-upload'),
                        url(r'^iframe_upload_track/', upload_track, {'hidden_frame': True}, name='djukebox-iframe-upload'),
