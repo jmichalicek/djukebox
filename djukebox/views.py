@@ -96,7 +96,7 @@ def artist_discography(request, artist_id):
 
 @cache_control(no_cache=True)
 @login_required
-def audio_player(request, track_id, format):
+def stream_track(request, track_id, format):
     # TODO: Rename this to stream_track?
     # format is a callable, the class of audio file to play such as Mp3File or OggFile
     track = get_object_or_404(format, track__id=track_id, track__user=request.user)
