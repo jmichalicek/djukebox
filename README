@@ -9,7 +9,7 @@ Celery - I believe 2.4+ will work, I am using 2.5.  You need a version with the 
 SoX or ffmpeg
 
 Configuration settings for settings.py - it should be pretty clear what these are:
-DJUKEBOX_AUDIO_ENCODER = 'sox' # or 'ffmpeg'
+DJUKEBOX_AUDIO_ENCODER = 'sox' # or 'ffmpeg' or 'avconv'
 DJUKEBOX_SOX_BIN = '/usr/bin/sox'
 DJUKEBOX_FFMPEG_BIN = '/usr/bin/ffmpeg'
 DJUKEBOX_UPLOAD_FILE_TYPES = ('audio/mp3', 'audio/mpeg', 'audio/ogg')

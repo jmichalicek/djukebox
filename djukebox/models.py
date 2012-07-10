@@ -85,18 +85,14 @@ class Mp3File(AudioFile):
 
     def get_artist(self):
         """Get the artist from the file's id3 tag"""
-        # Should this be an object attribute rather than doing this every
-        # time an attribute is needed from the id3?
         file_path = os.path.join(settings.MEDIA_ROOT, self.file.name)
         id3 = EasyID3(file_path)
-        #performer = id3.get('performer', [''])
         return id3.get('performer', [''])[0].strip()
 
     def get_album(self):
         """Get the album from the file's id3 tag"""
         file_path = os.path.join(settings.MEDIA_ROOT, self.file.name)
         id3 = EasyID3(file_path)
-
         return id3.get('album', [''])[0].strip()
 
     def get_album_artist(self):
@@ -106,6 +102,14 @@ class Mp3File(AudioFile):
         by that id3 version to get the album artist.
         """
 
+        # The spec is not very clear but currently using tpe2/tp2
+        # as the album artist (which might be "various artists" or
+        # something like that on a compilation or soundtrack)
+        # seems to be the standard.
+        # http://wiki.hydrogenaudio.org/index.php?title=Foobar2000:ID3_Tag_Mapping
+        # http://www.id3.org/iTunes
+        # Although this is not the use specified in the official standard
+        # http://www.id3.org/id3v2.3.0
         file_path = os.path.join(settings.MEDIA_ROOT, self.file.name)
         id3 = ID3(file_path)
         

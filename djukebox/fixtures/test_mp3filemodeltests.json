@@ -1,0 +1,12 @@
+[{"pk": 1,
+ "model": "djukebox.audiofile",
+ "fields": {
+     "track": 1,
+     "file": "djukebox/tracks/2012/05/12/silent.mp3",
+     "created": "2012-05-13T01:42:32.219Z"}
+ },
+ {"pk": 1,
+  "model": "djukebox.mp3file",
+  "fields": {}
+  }
+]

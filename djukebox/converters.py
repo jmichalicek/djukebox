@@ -50,7 +50,7 @@ class AvconvOggToMp3(ConverterBase):
         target_filename = self._get_target_filename(source_path, 'mp3')
 
         logger.debug('Converting %s to %s using avconv' %(source_path, target_filename))
-        subprocess.call([settings.DJUKEBOX_AVCONV_BIN, source_path, target_filename])
+        subprocess.call([settings.DJUKEBOX_AVCONV_BIN, '-i', source_path, target_filename])
 
         logger.debug('Finished encoding.  Saving AudioFile')
         return self._save(Mp3File, ogg_file, target_filename)
@@ -123,4 +123,4 @@ class SoxMp3ToOgg(ConverterBase):
         logger.debug('Converting %s to %s using sox' %(source_path, target_filename))
         subprocess.call([settings.DJUKEBOX_SOX_BIN, source_path, target_filename])
         logger.debug('Finished encoding.  Saving AudioFile')
-        return self._save(OggFile, mp3_file, target_filename)
+        return self._save(OggFile, mp3_file, '-t ogg', target_filename)
