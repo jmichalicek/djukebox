@@ -1,12 +1,26 @@
 {% extends 'djukebox/base.html' %}
+{% load bootstrap %}
+{% block other_css %}
+<link rel="stylesheet" type="text/css" href="{{ STATIC_URL }}djukebox/css/djukebox.css" />
+{% endblock other_css %}
 {% block body %}
 <div class="container">
-  <form name="login" method="post" login="{% url djukebox-login %}">
-    {% csrf_token %}
-    <ul>
-      {{ form.as_ul }}
-    </ul>
-    <input type="submit" value="login" />
-  </form>
+  <div class="row">
+    <div class="span4 offset4">
+      <div class="well">
+	<form name="login" method="post" login="{% url djukebox-login %}">
+	  {% csrf_token %}
+	  <ul>
+	    {{ form|bootstrap }}
+	    <div class="control-group">
+	      <div class="controls">
+		<input class="btn btn-primary" type="submit" value="login" />
+	      </div>
+	    </div>
+	  </ul>
+	</form>
+	</div>
+    </div>
+  </div>
 </div>
 {% endblock %}

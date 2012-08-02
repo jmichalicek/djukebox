@@ -1,7 +1,7 @@
 from setuptools import setup, find_packages
 
 package_data = ['static/css/*', 'static/img/*', 'static/js/*', 'templates/djukebox/*']
-dependencies = ['pillow', 'django-celery', 'mutagen', 'simplejson']
+dependencies = ['pillow', 'django-celery', 'mutagen', 'simplejson', 'django-bootstrap-form']
 setup(name = "djukebox",
       version = "0.0.1",
       description = "A django HTML 5 audio player",
@@ -13,7 +13,7 @@ setup(name = "djukebox",
       #'package' package must contain files (see list above)
       package_data = {'djukebox' : package_data },
       install_requires = dependencies,
-      long_description = """A HTML 5 audio player using Django""" 
+      long_description = """A HTML 5 audio player using Django"""
       #This next part it for the Cheese Shop, look a little down the page.
-      #classifiers = []     
+      #classifiers = []
 )

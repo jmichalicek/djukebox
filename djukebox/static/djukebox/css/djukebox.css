@@ -3,6 +3,9 @@
     height: 80%;
 }
 
-html, body {
-    height: 100%;
+body {
+    background-position: 0 40px;
+    background-repeat: repeat-x;
+    padding-top: 90px;
+    position: relative;
 }

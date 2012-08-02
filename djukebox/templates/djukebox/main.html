@@ -1,4 +1,8 @@
 {% extends 'djukebox/base.html' %}
+{% block other_css %}
+<link rel="stylesheet" type="text/css" href="{{ STATIC_URL }}djukebox/css/djukebox.css" />
+{% endblock other_css %}
+
 {% block jquery_scripts %}
 <script type="text/javascript">
 /* This could maybe be done better to pop up overlapping alerts or something */
@@ -113,8 +117,8 @@ jQuery(document).ajaxSend(function(event, xhr, settings) {
 </script>
 {% endblock %}
 {% block body %}
-<div class="container-fluid" style="height: 90%">
-  <div class="row-fluid" style="height: 100%">
+<div class="container" style="height: 90%">
+  <div class="row" style="height: 100%">
     <div class="span2 sidebar">
       <ul class="nav nav-pills nav-stacked">
         <li><a target="content_view_frame" href="{% url djukebox-homeframe %}">Home</a></li>
@@ -122,6 +126,7 @@ jQuery(document).ajaxSend(function(event, xhr, settings) {
         <li><a target="content_view_frame" href="{% url djukebox-artistlist %}">Artists</a></li>
         <li><a target="content_view_frame" href="{% url djukebox-tracklist %}">All Songs</a></li>
         <li><a target="content_view_frame" href="{% url djukebox-upload %}">Upload</a></li>
+	<li><a href="{% url djukebox-logout %}">Logout</a></li>
       </ul>
     </div>
     <div class="span10" style="height: 100%">
@@ -139,6 +144,6 @@ jQuery(document).ajaxSend(function(event, xhr, settings) {
     <span id="upload_status_message"></span>
   </div>
 </div>
-{#File upload iFrame until XHR Level 2 file upload has better support #}
+
 <iframe id="track_upload" name="track_upload" src="{% url djukebox-upload %}" style="display: none"></iframe>
 {% endblock %}

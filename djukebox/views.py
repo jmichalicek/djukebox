@@ -83,7 +83,7 @@ def artist_list(request):
 @login_required
 def artist_discography(request, artist_id):
     """View providing a list of songs and albums by a specific artist."""
-    
+
     artist = get_object_or_404(Artist, id=artist_id)
     albums = Album.objects.filter(artist=artist)
 
@@ -106,7 +106,7 @@ def stream_track(request, track_id, format):
     # As a fix I am just grabbing the first one here which seems to always work
     resp = HttpResponse(FileIterWrapper(open(file_path,"rb")), mimetype=mimetypes.guess_type(file_path)[0])
     resp['Content-Length'] = os.path.getsize(file_path)
-    resp['Content-Disposition'] = 'filename=' + os.path.basename(file_path)  
+    resp['Content-Disposition'] = 'filename=' + os.path.basename(file_path)
     return resp
 
 @login_required
@@ -129,10 +129,10 @@ def track_list(request):
 
 @login_required
 def main(request):
-    
+
     return render_to_response(
         'djukebox/main.html',
-        {},
+        {'content_view': reverse('djukebox-homeframe')},
         context_instance=RequestContext(request)
     )
 
@@ -234,13 +234,13 @@ class FileIterWrapper(object):
     def __init__(self, flo, chunk_size = 1024**2):
         self.flo = flo
         self.chunk_size = chunk_size
-        
+
     def next(self):
         data = self.flo.read(self.chunk_size)
         if data:
             return data
         else:
             raise StopIteration
-        
+
     def __iter__(self):
         return self
