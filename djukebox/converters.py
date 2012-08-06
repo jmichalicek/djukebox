@@ -16,7 +16,7 @@ class ConverterBase(object):
     # several files.  Does it matter?
 
     def _get_target_filename(self, source_path, extension):
-        
+
         # Takes full file path of setings.MEDIA_ROOT/whatever/file.ext
         # where /whatever/ is the upload_to attribute on the FileField
         # and returns that same path with the extension changed
@@ -25,7 +25,7 @@ class ConverterBase(object):
         directory, name = os.path.split(source_path)
         name, ext = os.path.splitext(name)
         return os.path.join(directory, '%s.%s' %(name, extension))
-        
+
 
     # or should this take an actual file object like the ogg_file
     def _save(self, file_class, source_file, target_filename):
@@ -107,7 +107,7 @@ class FFMpegMp3ToOgg(ConverterBase):
         target_filename = self._get_target_filename(source_path, extension='ogg')
 
         logger.debug('Converting %s to %s using ffmpeg' %(source_path, target_filename))
-        subprocess.call([settings.DJUKEBOX_FFMPEG_BIN, '-i', source_path, '-acodec', 'vorbis', 
+        subprocess.call([settings.DJUKEBOX_FFMPEG_BIN, '-i', source_path, '-acodec', 'vorbis',
                          '-ac', '2', target_filename])
 
         logger.debug('Finished encoding.  Saving AudioFile')
@@ -123,4 +123,4 @@ class SoxMp3ToOgg(ConverterBase):
         logger.debug('Converting %s to %s using sox' %(source_path, target_filename))
         subprocess.call([settings.DJUKEBOX_SOX_BIN, source_path, target_filename])
         logger.debug('Finished encoding.  Saving AudioFile')
-        return self._save(OggFile, mp3_file, '-t ogg', target_filename)
+        return self._save(OggFile, mp3_file, target_filename)
