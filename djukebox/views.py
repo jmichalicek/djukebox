@@ -213,16 +213,19 @@ def upload_track(request, hidden_frame=False):
                     convert_file_to_ogg.delay(audio_file.id)
 
                 logger.debug('Successfully uploaded track %s with id %s' %(track.title, track.id))
-                json_response_data = '{"track_upload": {"status": "success", "title": "%s"}}' %track.title
+                #json_response_data = '{"track_upload": {"status": "success", "title": "%s"}}' %track.title
+                json_response_data = {'track_upload': {'status': 'success', 'title': track.title}}
 
         else:
             # Get the errors in a cleaner way
             logger.debug('{"track_upload": {"status": "error", "errors": %s}}' %upload_form.errors)
-            json_response_data = '{"track_upload": {"status": "error", "errors": %s}}' %upload_form.errors
+            #json_response_data = '{"track_upload": {"status": "error", "errors": %s}}' %dict(upload_form.errors.values())
+            json_response_data = {'track_upload': {'status': 'error', 'errors': upload_form.errors.values()}}
 
 
         if hidden_frame == True:
-            return HttpResponse(json_response_data, mimetype='application/javascript')
+            import json
+            return HttpResponse(json.dumps(json_response_data), mimetype='application/javascript')
         else:
             # On the off chance the upload is not being posted to an iframe so that it can happen asynchronously
             # where is a sane place to redirect to?

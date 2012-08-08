@@ -18,10 +18,18 @@ $(document).ready(function() {
             $('#upload_status_message').text('Successfully uploaded ' + json.track_upload.title);
             $('#upload_status_alert').addClass("alert-success");
         } else {
-           $('#upload_status_message').text('Error uploading: ' + json.track_upload.error);
-           $('#upload_status_alert').addClass("alert-error");
+            //For now just grab the first one.  Need to implement a better alert system
+            //which can deal with multiple alerts at once
+            $('#upload_status_message').text('Error uploading: ' + json.track_upload.errors[0]);
+            $('#upload_status_alert').addClass("alert-error");
         }
         $('#upload_status_alert').show();
+    });
+
+    //The built in bootstrap close removes the alert div from the dom
+    //and then it does not reappear since it's completely gone
+    $('.alert .close').live('click',function(){
+        $(this).parent().hide();
     });
 
 
@@ -140,7 +148,7 @@ jQuery(document).ajaxSend(function(event, xhr, settings) {
     </audio>
   </div>
   <div class="alert" style="display: none" id="upload_status_alert">
-    <a class="close" data-dismiss="alert">&times;</a>
+    <a class="close" href="#">&times;</a>
     <span id="upload_status_message"></span>
   </div>
 </div>
