@@ -1,3 +1,9 @@
+"""
+WARNING!  Several of these tests currently ASSUME a test system and could result in a loss of data.
+That is unlikely as the files are all put in directories suggesting they were created in the past,
+but I cannot control what else you do, so it IS possible.
+"""
+
 from django.conf import settings
 from django.contrib.auth.models import User
 from django.core.urlresolvers import reverse
@@ -46,7 +52,7 @@ class MainViewTests(TestCase):
 
     def setUp(self):
         self.user = User.objects.create_user('test', 'test@example.com', 'test')
-        
+
     def test_logged_in(self):
         """Access the main view while logged in"""
         self.client.login(username='test', password='test')
@@ -57,7 +63,7 @@ class MainViewTests(TestCase):
         """Access the main view when not logged in"""
         response = self.client.get(reverse('djukebox-home'))
         self.assertRedirects(response, '%s?next=%s' %(settings.LOGIN_URL, reverse('djukebox-home')))
-        
+
 class AlbumListViewTests(TestCase):
     """Test cases for views.album_list"""
 
@@ -167,19 +173,28 @@ class OggFileTests(TestCase):
     def setUp(self):
         self.oggfile = OggFile.objects.get(id=1)
 
-        dest_file = os.path.join(settings.MEDIA_ROOT,
-                                 self.oggfile.file.name)
+        self.dest_file = os.path.join(settings.MEDIA_ROOT,
+                                      self.oggfile.file.name)
+        self.dest_dir = os.path.dirname(self.dest_file)
 
-        if not os.path.exists(dest_file):
+        if not os.path.exists(self.dest_dir):
+            os.makedirs(self.dest_dir)
+
+        if os.path.exists(self.dest_dir):
             current_dir = os.path.dirname(os.path.abspath(__file__))
             source_ogg = os.path.join(current_dir, 'test_audio/silent.ogg')
-            shutil.copyfile(source_ogg, dest_file)
+            shutil.copyfile(source_ogg, self.dest_file)
 
     def tearDown(self):
-        dest_file = os.path.join(settings.MEDIA_ROOT,
-                                 self.oggfile.file.name)
-        if os.path.exists(dest_file):
-            os.remove(dest_file)
+        # CAREFUL!  This could actually delete a real file.
+        if os.path.exists(self.dest_file):
+            os.remove(self.dest_file)
+
+        # Don't delete the dir if there are other files in there
+        if os.path.exists(self.dest_dir) and not os.listdir(self.dest_dir):
+            # Will blow up if this is a sym link...
+            # make that be the case and find a better way to do it
+            shutil.rmtree(self.dest_dir)
 
 
 class OggFileUnicodeTests(OggFileTests):
@@ -237,20 +252,30 @@ class Mp3FileTests(TestCase):
     def setUp(self):
         self.mp3file = Mp3File.objects.get(id=1)
 
-        dest_file = os.path.join(settings.MEDIA_ROOT,
+        self.dest_file = os.path.join(settings.MEDIA_ROOT,
                                  self.mp3file.file.name)
 
-        if not os.path.exists(dest_file):
+        self.dest_dir = os.path.dirname(self.dest_file)
+        if not os.path.exists(self.dest_dir):
+            os.makedirs(self.dest_dir)
+
+        if not os.path.exists(self.dest_file):
             current_dir = os.path.dirname(os.path.abspath(__file__))
             source_mp3 = os.path.join(current_dir, 'test_audio/silent.mp3')
-            shutil.copyfile(source_mp3, dest_file)
+            shutil.copyfile(source_mp3, self.dest_file)
 
     def tearDown(self):
         dest_file = os.path.join(settings.MEDIA_ROOT,
                                  self.mp3file.file.name)
 
-        if os.path.exists(dest_file):
-            os.remove(dest_file)
+        if os.path.exists(self.dest_file):
+            os.remove(self.dest_file)
+
+        # Don't delete the dir if there are other files in there
+        if os.path.exists(self.dest_dir) and not os.listdir(self.dest_dir):
+            # Will blow up if this is a sym link...
+            # make that be the case and find a better way to do it
+            shutil.rmtree(self.dest_dir)
 
 
 class Mp3FileUnicodeTests(Mp3FileTests):
@@ -313,7 +338,7 @@ class OggSourceConversionTests(TestCase):
                                  self.oggfile.file.name)
         if os.path.exists(dest_file):
             os.remove(dest_file)
-    
+
 
 class FileConversionUnitTests(TestCase):
     def test_convert_file_to_ogg_task(self):
