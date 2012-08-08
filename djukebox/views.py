@@ -12,6 +12,7 @@ from django.http import Http404, HttpResponseRedirect, HttpResponse
 from models import Album, Artist, Track, AudioFile, OggFile, Mp3File
 from forms import TrackUploadForm
 from tasks import convert_file_to_ogg, convert_file_to_mp3
+import app_settings
 
 import os
 import mimetypes
@@ -146,16 +147,16 @@ def upload_track(request, hidden_frame=False):
     if request.method == 'POST':
         upload_form = TrackUploadForm(request.POST, request.FILES)
         if upload_form.is_valid():
-            default_track_title = getattr(settings, 'DJUKEBOX_DEFAULT_TRACK_TITLE', Track.DEFAULT_TITLE)
-            default_artist = getattr(settings, 'DJUKEBOX_DEFAULT_ARTIST', Artist.DEFAULT_ARTIST)
+            default_track_title = app_settings.DEFAULT_TRACK_TITLE
+            default_artist = app_settings.DEFAULT_ARTIST
 
             track = Track(user=request.user)
             track.title = default_track_title
             track.full_clean()
             track.save()
 
-            mp3_content_types = getattr(settings, 'DJUKEBOX_MP3_CONTENT_TYPES', Mp3File.DEFAULT_CONTENT_TYPES)
-            ogg_content_types = getattr(settings, 'DJUKEBOX_OGG_CONTENT_TYPES', OggFile.DEFAULT_CONTENT_TYPES)
+            mp3_content_types = app_settings.MP3_CONTENT_TYPES
+            ogg_content_types = app_settings.OGG_CONTENT_TYPES
 
             file_data = upload_form.cleaned_data['file']
             # TODO: Add more flexibility for user to specify mp3 and ogg content types?
@@ -199,20 +200,20 @@ def upload_track(request, hidden_frame=False):
             # TODO: Use messages framework for these track upload success/fail messages
             # as well as get celery tasks to do that. https://github.com/codeinthehole/django-async-messages maybe?
             # ...or write my own for fun.
-            if mimetype not in settings.DJUKEBOX_UPLOAD_FILE_TYPES:
+            if mimetype not in app_settings.UPLOAD_FILE_TYPES:
                 # Delete the Track and AudioFile and return an error
                 json_response_data = '{"track_upload": {"status": "error", "error": "invalid file type %s"}}' %mimetype
                 audio_file.delete()
                 track.delete()
                 logger.warn('mimetypes.guess_type detected different content type than http header specified')
-            elif getattr(settings, 'DJUKEBOX_CONVERT_UPLOADS', True):
+            elif app_settings.CONVERT_UPLOADS:
                 if mimetype in ogg_content_types:
                     convert_file_to_mp3.delay(audio_file.id)
                 elif mimetype in mp3_content_types:
                     convert_file_to_ogg.delay(audio_file.id)
 
                 logger.debug('Successfully uploaded track %s with id %s' %(track.title, track.id))
-                json_response_data = '{"track_upload": {"status": "sucess", "title": "%s"}}' %track.title
+                json_response_data = '{"track_upload": {"status": "success", "title": "%s"}}' %track.title
 
         else:
             # Get the errors in a cleaner way

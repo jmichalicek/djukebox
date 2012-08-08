@@ -14,7 +14,7 @@ $(document).ready(function() {
         var json = jQuery.parseJSON($('#track_upload').contents().text());
 
         $('#upload_status_alert').removeClass("alert-success alert-error");
-        if(json.track_upload.status == "sucess") {
+        if(json.track_upload.status == "success") {
             $('#upload_status_message').text('Successfully uploaded ' + json.track_upload.title);
             $('#upload_status_alert').addClass("alert-success");
         } else {

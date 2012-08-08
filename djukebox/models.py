@@ -4,6 +4,8 @@ from django.core.urlresolvers import reverse
 from django.db.models.signals import post_delete
 from django.conf import settings
 
+import app_settings
+
 import os
 import logging
 
@@ -34,8 +36,8 @@ class Album(models.Model):
     def album_from_metadata(cls, audio_file):
         """Get the Album() from the audio file's metadata."""
         user = audio_file.track.user
-        default_title = getattr(settings, 'DJUKEBOX_DEFAULT_ALBUM_TITLE', Album.DEFAULT_TITLE)
-        default_artist = getattr(settings, 'DJUKEBOX_DEFAULT_ARTIST', Album.DEFAULT_ARTIST)
+        default_title = app_settings.DEFAULT_ALBUM_TITLE
+        default_artist = app_settings.DEFAULT_ARTIST
 
         album_title = (audio_file.get_album() if audio_file.get_album() != '' else default_title)
         # Try getting the album artist first
@@ -112,7 +114,7 @@ class Mp3File(AudioFile):
         # http://www.id3.org/id3v2.3.0
         file_path = os.path.join(settings.MEDIA_ROOT, self.file.name)
         id3 = ID3(file_path)
-        
+
         # I really need to find a cleaner way of doing this
         artist = id3.get('TPE2', None)
         if artist is None:
@@ -124,15 +126,14 @@ class Mp3File(AudioFile):
         return artist.text[0].strip()
 
     def get_stream_url(self):
-        use_media_url = getattr(settings, 'DJUKEBOX_USE_MEDIA_URL', False)
-        if use_media_url:
+        if app_settings.USE_MEDIA_URL:
             url = '%s%s' %(settings.MEDIA_URL, self.file.name)
         else:
             url =  reverse('djukebox-stream-mp3', args=[str(self.track.id)])
 
         return url
 
-        
+
 
 class OggFile(AudioFile):
     """An ogg-vorbis audio file"""
@@ -161,10 +162,9 @@ class OggFile(AudioFile):
         file_path = os.path.join(settings.MEDIA_ROOT, self.file.name)
         tags = OggVorbis(file_path)
         return tags.get('performer', '').strip()
-    
+
     def get_stream_url(self):
-        use_media_url = getattr(settings, 'DJUKEBOX_USE_MEDIA_URL', False)
-        if use_media_url:
+        if app_settings.USE_MEDIA_URL:
             url = '%s%s' %(settings.MEDIA_URL, self.file.name)
         else:
             url = reverse('djukebox-stream-ogg', args=[str(self.track.id)])

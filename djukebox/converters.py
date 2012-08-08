@@ -2,7 +2,9 @@ import os
 import subprocess
 import logging
 from django.conf import settings
+
 from models import AudioFile, Mp3File, OggFile
+import app_settings
 
 logger = logging.getLogger(__name__)
 
@@ -50,7 +52,7 @@ class AvconvOggToMp3(ConverterBase):
         target_filename = self._get_target_filename(source_path, 'mp3')
 
         logger.debug('Converting %s to %s using avconv' %(source_path, target_filename))
-        subprocess.call([settings.DJUKEBOX_AVCONV_BIN, '-i', source_path, target_filename])
+        subprocess.call([app_settings.AVCONV_BIN, '-i', source_path, target_filename])
 
         logger.debug('Finished encoding.  Saving AudioFile')
         return self._save(Mp3File, ogg_file, target_filename)
@@ -65,7 +67,7 @@ class FFMpegOggToMp3(ConverterBase):
 
         logger.debug('Converting %s to %s using ffmpeg' %(source_path, target_filename))
         #TODO: Use Kenneth Reitz' module for subprocess handling
-        subprocess.call([settings.DJUKEBOX_FFMPEG_BIN, '-i', source_path, target_filename])
+        subprocess.call([app_settings.FFMPEG_BIN, '-i', source_path, target_filename])
 
         logger.debug('Finished encoding.  Saving AudioFile')
         return self._save(Mp3File, ogg_file, target_filename)
@@ -81,7 +83,7 @@ class SoxOggToMp3(ConverterBase):
         target_filename = self._get_target_filename(source_path, 'mp3')
 
         logger.debug('Converting %s to %s using sox' %(source_path, target_filename))
-        subprocess.call([settings.DJUKEBOX_SOX_BIN, source_path, target_filename])
+        subprocess.call([app_settings.SOX_BIN, source_path, target_filename])
 
         logger.debug('Finished encoding.  Saving AudioFile')
         return self._save(Mp3File, ogg_file, target_filename)
@@ -93,7 +95,7 @@ class AvconvMp3ToOgg(ConverterBase):
         target_filename = self._get_target_filename(source_path, extension='ogg')
 
         logger.debug('Converting %s to %s using avconv' %(source_path, target_filename))
-        subprocess.call([settings.DJUKEBOX_AVCONV_BIN, '-i', source_path, '-acodec', 'libvorbis',
+        subprocess.call([app_settings.AVCONV_BIN, '-i', source_path, '-acodec', 'libvorbis',
                          '-ac', '2', target_filename])
 
         logger.debug('Finished encoding.  Saving AudioFile')
@@ -107,7 +109,7 @@ class FFMpegMp3ToOgg(ConverterBase):
         target_filename = self._get_target_filename(source_path, extension='ogg')
 
         logger.debug('Converting %s to %s using ffmpeg' %(source_path, target_filename))
-        subprocess.call([settings.DJUKEBOX_FFMPEG_BIN, '-i', source_path, '-acodec', 'vorbis',
+        subprocess.call([app_settings.FFMPEG_BIN, '-i', source_path, '-acodec', 'libvorbis',
                          '-ac', '2', target_filename])
 
         logger.debug('Finished encoding.  Saving AudioFile')
@@ -121,6 +123,6 @@ class SoxMp3ToOgg(ConverterBase):
         target_filename = self._get_target_filename(source_path, extension='ogg')
 
         logger.debug('Converting %s to %s using sox' %(source_path, target_filename))
-        subprocess.call([settings.DJUKEBOX_SOX_BIN, source_path, target_filename])
+        subprocess.call([app_settings.SOX_BIN, source_path, target_filename])
         logger.debug('Finished encoding.  Saving AudioFile')
         return self._save(OggFile, mp3_file, target_filename)

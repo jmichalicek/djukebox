@@ -1,6 +1,8 @@
 from django import forms
-from django.conf import settings
+from django.template.defaultfilters import filesizeformat
+
 from models import AudioFile
+from app_settings import UPLOAD_FILE_MAX_SIZE, UPLOAD_FILE_TYPES
 
 class TrackUploadForm(forms.Form):
     file = forms.FileField(label='Select a song to upload')
@@ -16,9 +18,9 @@ class TrackUploadForm(forms.Form):
             if len(data.name.split('.')) == 1:
                 raise forms.ValidationError('File type is not supported')
 
-            if file_type in settings.DJUKEBOX_UPLOAD_FILE_TYPES:
-                if data._size > settings.DJUKEBOX_UPLOAD_FILE_MAX_SIZE:
-                    raise forms.ValidationError('Please keep filesize under %s. Current filesize %s' % (filesizeformat(settings.DJUKEBOX_UPLOAD_FILE_MAX_SIZE), filesizeformat(data._size)))
+            if file_type in UPLOAD_FILE_TYPES:
+                if data._size > UPLOAD_FILE_MAX_SIZE:
+                    raise forms.ValidationError('Please keep filesize under %s. Current filesize %s' % (filesizeformat(UPLOAD_FILE_MAX_SIZE), filesizeformat(data._size)))
             else:
                 raise forms.ValidationError('File type is not supported: %s' %file_type)
         return data
