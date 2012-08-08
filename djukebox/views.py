@@ -1,3 +1,4 @@
+from django.contrib import messages
 from django.contrib.auth.decorators import login_required
 from django.core.urlresolvers import reverse
 from django.core.exceptions import ObjectDoesNotExist
@@ -187,8 +188,17 @@ def upload_track(request, hidden_frame=False):
             # and kill it if it's not.  The track upload form validates the http content-type header
             # but does not actually check the file.
             mimetype = mimetypes.guess_type(os.path.join(settings.MEDIA_ROOT, audio_file.file.name))[0]
+
             # Check allowed file types first.  We may want to only allow certain types
             # even if the system can support others.
+            # Windows is annoying and sends video/ogg if the file extension is .ogg
+            # and audio/ogg if it's .oga even though the standard says .ogg is for audio
+            # according to wikipedia "Since 2007, the Xiph.Org Foundation recommends that .ogg only be
+            # used for Ogg Vorbis audio files"
+
+            # TODO: Use messages framework for these track upload success/fail messages
+            # as well as get celery tasks to do that. https://github.com/codeinthehole/django-async-messages maybe?
+            # ...or write my own for fun.
             if mimetype not in settings.DJUKEBOX_UPLOAD_FILE_TYPES:
                 # Delete the Track and AudioFile and return an error
                 json_response_data = '{"track_upload": {"status": "error", "error": "invalid file type %s"}}' %mimetype
