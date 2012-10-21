@@ -5,7 +5,7 @@
 </div>
 <div class="span10">
   {{#each tracks }}
-  <div id="{{this.id}}" class="thumbnail track_item">
+  <div id="{{this.id}}" class="thumbnail track_item" mp3="{{this.mp3_stream_url}}" ogg="{{this.ogg_stream_url}}">
     {{this.title}}
   </div>
   {{/each}}
