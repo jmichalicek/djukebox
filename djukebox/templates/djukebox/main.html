@@ -3,12 +3,231 @@
 <link rel="stylesheet" type="text/css" href="{{ STATIC_URL }}djukebox/css/djukebox.css" />
 {% endblock other_css %}
 
-{% block jquery_scripts %}
+{% block body %}
+<div class="container" style="height: 90%">
+  <div class="row" style="height: 100%">
+    <div class="span2 sidebar">
+      <ul class="nav nav-pills nav-stacked">
+        <li><a href="{% url djukebox-root %}#">Home</a></li>
+        <li><a href="{% url djukebox-root %}#albums/">Albums</a></li>
+        <li><a href="{% url djukebox-root %}#artists/">Artists</a></li>
+        <li><a target="content_view_frame" href="{% url djukebox-tracklist %}">All Songs</a></li>
+        <li><a target="content_view_frame" href="{% url djukebox-upload %}">Upload</a></li>
+        <li><a href="{% url djukebox-logout %}">Logout</a></li>
+      </ul>
+    </div>
+    <div class="span10" id="content" name="content" style="height: 100%">
+      
+    </div>
+  </div>
+  <div class="row">
+    <div class="span12" id="audio_player_div">
+      <audio id="audio_player" preload="auto" controls="controls" autoplay="">
+	<source id="ogg_source" type="audio/ogg" />
+	<source id="mp3_source" type="audio/mp3" />
+      </audio>
+    </div>
+  </div>
+  <div class="alert" style="display: none" id="upload_status_alert">
+    <a class="close" href="#">&times;</a>
+    <span id="upload_status_message"></span>
+  </div>
+</div>
+
+<iframe id="track_upload" name="track_upload" src="{% url djukebox-upload %}" style="display: none"></iframe>
+
+<script type="text/javascript" src="{{STATIC_URL}}djukebox/js/handlebars.js"></script>
+<script type="text/javascript" src="{{STATIC_URL}}djukebox/js/jquery-csrf.js"></script>
+
+
+{% comment %}
+<!--Handlebars templates.  There must be a better way.  I'd rather not ajax in separate template files
+that seems just as bad. -->
+<script id="artistlist-template" type="text/x-handlebars-template">
+  <div class="container">
+    {{#each artists}}
+    <div class="thumbnail">
+      <span><a href="{{this.1}}">{{this.0.name}}</a></span>
+    </div>
+    {{/each}}
+   </div>
+</script>
+{% endcomment %}
+
+
 <script type="text/javascript">
 /* This could maybe be done better to pop up overlapping alerts or something */
 $(document).ready(function() {
-    var eventMethod = window.addEventListener ? "addEventListener" : "attachEvent";
-    var eventer = window[eventMethod];
+
+    //obj to store pre-compiled templates
+    var compiled_templates = new Object();
+    var ARTISTLIST = 'artist-list.js';
+    var ARTISTALBUMS = 'artist-albums.js';
+    var ALBUM = 'album.js';
+    var ARTISTTRACKS = 'artist-tracks.js';
+    var ALBUMLIST = 'album-list.js';
+
+    function getTemplateAjax(file) {
+        var template;
+
+        return $.ajax({
+                url: "{{ STATIC_URL }}djukebox/js/templates/" + file, //ex. js/templates/mytemplate.handlebars
+                cache: true,
+                dataType: "text",
+                success: function(data) {
+                    artistlist_template = Handlebars.compile(data);
+                    template = Handlebars.compile(data);
+                    compiled_templates[file] = template;
+                },
+         });
+    }
+
+    function switchView(template, context){
+        if(template in compiled_templates) {
+            $('#content').html(compiled_templates[template](context));
+            // maybe this should be passed in callbacks
+            $('.track_item').dblclick(function(obj) {
+               rebuildAudioPlayer($(this).attr("ogg"), $(this).attr("mp3"));
+            });
+
+        } else {
+            $.when(getTemplateAjax(template, context)).then(function() {
+                switchView(template, context);
+            });
+        }
+    }
+
+    function artistAjax(artist_id) {
+        return $.ajax({
+                {% comment %}
+                A bit of a kludge here.  Really we want api_dispatch_detail url
+                but to get that we have to know the resource pk when the template is rendered,
+                which we don't.  Fortunately the url is just the api_dispatch_list plus the pk.
+                It could also be retrieved from the API with extra ajax calls, but I want to avoid
+                that until it's necessary.
+                {% endcomment %}
+                url: "{% url api_dispatch_list resource_name='artist' api_name='v1' %}" + artist_id + "/",
+                cache: true,
+                dataType: "json",
+                });
+    }
+
+    function albumsByArtistAjax(artist_id) {
+        return $.ajax({
+          url: "{% url api_dispatch_list resource_name='album' api_name='v1' %}",
+          data: {"artist": artist_id, "details": "tracks"},
+          cache: true,
+          dataType: "json"
+        });
+    }
+
+    function albumAjax(album_id) {
+        return $.ajax({
+            url: "{% url api_dispatch_list resource_name='album' api_name='v1' %}" + album_id + "/",
+            data: {"details": "artist,tracks"},
+            cache: true,
+            dataType: "json"
+        });
+    }
+
+    function albumsAjax() {
+        return $.ajax({
+            url: "{% url api_dispatch_list resource_name='album' api_name='v1' %}",
+            data: {"details": "artist"},
+            cache: true,
+            dataType: "json"
+        });
+    }
+
+    function getViewData() {
+        var fragments = window.location.hash.replace('#', '').split("/");
+
+        // makes ajax call to get correct view data based on the url fragment
+        // and then calls switchView() to switch to the correct view
+        switch(fragments[0]) {
+          case 'album':
+             $.when(albumAjax(fragments[1])).then(function(data) {
+                 switchView(ALBUM, data);
+             });
+             break;
+
+          case 'albums':
+            $.when(albumsAjax()).then(function(data){
+                switchView(ALBUMLIST, data);
+            });
+            break;
+
+          case 'artist':
+            $.when(artistAjax(fragments[1]), albumsByArtistAjax(fragments[1])).then(function(artist, albums){
+              switchView(ARTISTALBUMS, {"artist": artist[0], "albums": albums[0].albums});
+            });
+            break;
+
+          case 'artists':
+            $.ajax({
+                {% comment %}
+                would think we could namespace this in case there are other tastypie api's in use.
+                may have to settle for using a more descriptive name
+                {% endcomment %}
+                url: "{% url api_dispatch_list resource_name='artist' api_name='v1' %}",
+                cache: true,
+                dataType: "json",
+                success: function(data) {
+                    switchView(ARTISTLIST, data);
+                },});
+            break;
+
+          case 'tracks':
+            break;
+          default:
+            $.ajax({
+                url: "{% url api_dispatch_list resource_name='artist' api_name='v1' %}",
+                cache: true,
+                dataType: "json",
+                success: function(data) {
+                    switchView(ARTISTLIST, data);
+                },});
+        }
+    }
+
+    function rebuildAudioPlayer(ogg_url, mp3_url) {
+        //rebuild the player since just changing src properties is flakey in default players
+        $("#audio_player").remove();
+
+        var player = $("<audio>", {
+            id: "audio_player",
+            controls: "controls",
+            preload: "auto"
+        });
+
+        if(ogg_url) {
+            var ogg = $("<source>", {
+                id: "ogg_source",
+                type: "audio/ogg",
+                src: ogg_url
+            });
+            ogg.appendTo(player);
+        }
+
+        if(mp3_url) {
+            var mp3 = $("<source>", {
+                id: "mp3_source",
+                type: "audio/mp3",
+                src: mp3_url
+            });
+            mp3.appendTo(player);
+        }
+        player.appendTo($("#audio_player_div"));
+    }
+
+    //preload and compile templates on page load
+    //register hash changed listener
+    //and call
+    $(window).bind('hashchange', getViewData);
+    $.when(getTemplateAjax(ARTISTLIST), getTemplateAjax(ARTISTALBUMS),
+           getTemplateAjax(ALBUMLIST)).then(function() {
+        getViewData();
+    });
 
     $("#track_upload").load(function() {
         var json = jQuery.parseJSON($('#track_upload').contents().text());
@@ -31,127 +250,6 @@ $(document).ready(function() {
     $('.alert .close').live('click',function(){
         $(this).parent().hide();
     });
-
-
-    change_track_listener = function(e) {
-        var track = e.data;
-        var request_url = "{% url djukebox-list-streams %}" + track + "/";
-
-        $.ajax({
-          type: "POST",
-          url: request_url,
-          data: "",
-          dataType: "json",
-          success: function(data) {
-          {% comment %}
-          This used to work with detach(), but sometime recently
-          that broke in both opera and firefox (ff12) although still worked
-          in Chrome.  A full remove() and re add works right in opera and chrome
-          but firefox is still buggy and gets stuck playing the same song
-          over and over even though the dom elements show as updated in
-          firebug and dragonfly
-          {% endcomment %}
-            $("#audio_player").remove();
-
-            var player = $("<audio>", {
-              id: "audio_player",
-              controls: "controls",
-              preload: "auto"
-            });
-
-            if(data.ogg) {
-                var ogg = $("<source>", {
-                    id: "ogg_source",
-                    type: "audio/ogg",
-                    src: data.ogg
-                });
-                ogg.appendTo(player);
-            }
-
-            if(data.mp3) {
-                var mp3 = $("<source>", {
-                    id: "mp3_source",
-                    type: "audio/mp3",
-                    src: data.mp3
-                });
-                mp3.appendTo(player);
-            }
-
-	    player.appendTo($("#audio_player_div"));
-           }
-        });
-      }
-
-    eventer("message", change_track_listener, false);
-});
-
-//special csrf stuff
-jQuery(document).ajaxSend(function(event, xhr, settings) {
-    function getCookie(name) {
-        var cookieValue = null;
-        if (document.cookie && document.cookie != '') {
-            var cookies = document.cookie.split(';');
-            for (var i = 0; i < cookies.length; i++) {
-                var cookie = jQuery.trim(cookies[i]);
-                // Does this cookie string begin with the name we want?
-                if (cookie.substring(0, name.length + 1) == (name + '=')) {
-                    cookieValue = decodeURIComponent(cookie.substring(name.length + 1));
-                    break;
-                }
-            }
-        }
-        return cookieValue;
-    }
-    function sameOrigin(url) {
-        // url could be relative or scheme relative or absolute
-        var host = document.location.host; // host + port
-        var protocol = document.location.protocol;
-        var sr_origin = '//' + host;
-        var origin = protocol + sr_origin;
-        // Allow absolute or scheme relative URLs to same origin
-        return (url == origin || url.slice(0, origin.length + 1) == origin + '/') ||
-            (url == sr_origin || url.slice(0, sr_origin.length + 1) == sr_origin + '/') ||
-            // or any other URL that isn't scheme relative or absolute i.e relative.
-            !(/^(\/\/|http:|https:).*/.test(url));
-    }
-    function safeMethod(method) {
-        return (/^(GET|HEAD|OPTIONS|TRACE)$/.test(method));
-    }
-
-    if (!safeMethod(settings.type) && sameOrigin(settings.url)) {
-        xhr.setRequestHeader("X-CSRFToken", getCookie('csrftoken'));
-    }
 });
 </script>
-{% endblock %}
-{% block body %}
-<div class="container" style="height: 90%">
-  <div class="row" style="height: 100%">
-    <div class="span2 sidebar">
-      <ul class="nav nav-pills nav-stacked">
-        <li><a target="content_view_frame" href="{% url djukebox-homeframe %}">Home</a></li>
-        <li><a target="content_view_frame" href="{% url djukebox-albumlist %}">Albums</a></li>
-        <li><a target="content_view_frame" href="{% url djukebox-artistlist %}">Artists</a></li>
-        <li><a target="content_view_frame" href="{% url djukebox-tracklist %}">All Songs</a></li>
-        <li><a target="content_view_frame" href="{% url djukebox-upload %}">Upload</a></li>
-	<li><a href="{% url djukebox-logout %}">Logout</a></li>
-      </ul>
-    </div>
-    <div class="span10" style="height: 100%">
-      <iframe name="content_view_frame" class="main_iframe" frameborder="0" src="{{ content_view }}"></iframe>
-    </div>
-  </div>
-  <div class="row-fluid" id="audio_player_div">
-    <audio id="audio_player" preload="auto" controls="controls" autoplay="">
-      <source id="ogg_source" type="audio/ogg" />
-      <source id="mp3_source" type="audio/mp3" />
-    </audio>
-  </div>
-  <div class="alert" style="display: none" id="upload_status_alert">
-    <a class="close" href="#">&times;</a>
-    <span id="upload_status_message"></span>
-  </div>
-</div>
-
-<iframe id="track_upload" name="track_upload" src="{% url djukebox-upload %}" style="display: none"></iframe>
 {% endblock %}

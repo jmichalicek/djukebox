@@ -1,8 +1,18 @@
 from django.conf.urls.defaults import *
+from tastypie.api import Api, NamespacedApi
+
 from views import *
 from models import Mp3File, OggFile
+from api import *
+
+# There must be a better way
+v1_api = NamespacedApi(api_name='v1', urlconf_namespace='djukeboxapi')
+v1_api.register(ArtistResource())
+v1_api.register(AlbumResource())
+v1_api.register(TrackResource())
 
 urlpatterns = patterns('',
+                       url(r'^api/', include(v1_api.urls)),
                        url(r'^home/', main, name='djukebox-home'),
                        url(r'^homeframe/', album_list, name='djukebox-homeframe'),
                        url(r'^stream_list/(?P<track_id>\d+)/', track_stream_list, name='djukebox-list-streams'),
@@ -21,5 +31,5 @@ urlpatterns = patterns('',
                        url(r'^iframe_upload_track/', upload_track, {'hidden_frame': True}, name='djukebox-iframe-upload'),
                        url(r'^login/', 'django.contrib.auth.views.login', {'template_name': 'djukebox/login.html'}, name='djukebox-login'),
                        url(r'^logout/', 'django.contrib.auth.views.logout_then_login', name="djukebox-logout"),
-                       url(r'^$', main)
+                       url(r'^$', main, name='djukebox-root')
                        )

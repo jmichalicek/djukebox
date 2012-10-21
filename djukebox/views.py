@@ -1,5 +1,6 @@
 from django.contrib import messages
 from django.contrib.auth.decorators import login_required
+from django.core import serializers
 from django.core.urlresolvers import reverse
 from django.core.exceptions import ObjectDoesNotExist
 from django.conf import settings
@@ -49,8 +50,22 @@ def track_stream_list(request, track_id=None):
 @login_required
 def album_songs(request, album_id):
     """View displaying the tracks on an album"""
+
+    if request.is_ajax():
+        albumqs = Album.objects.prefetch_related('track_set').select_related('artist')
+        albumqs = albumsq.filter(id=album_id, album__user__id=request.user_id)
+
+        # django's serializer is poo.  Probably easiest to just use the queries below
+        # use the serializer on each one and then mangle into json
+        serialized = serializers.serialize('json', albumqs)
+        return HttpResponse(serialized, mimetype='application/json')
+
+    # this bit should go away
     album = get_object_or_404(Album, id=album_id, user=request.user)
     tracks = Track.objects.filter(album=album)
+
+    if request.is_ajax():
+        albumjson = serializers.serialize('json', (album,))
 
     return render_to_response(
         'djukebox/album_songs.html',
@@ -64,6 +79,10 @@ def album_list(request):
     """View providing a list of a user's albums"""
     albums = Album.objects.filter(user=request.user)
 
+    if request.is_ajax():
+        serialized_albums = serializers.serialize('json', albums)
+        return HttpResponse(simplejson.dumps(serialized_albums), mimetype='application/json')
+
     return render_to_response(
         'djukebox/album_list.html',
         {'albums': albums,},
@@ -76,6 +95,11 @@ def artist_list(request):
     """View providing a list of a user's artists."""
     artists = Artist.objects.filter(user=request.user)
 
+    if request.is_ajax():
+        serialized_artists = serializers.serialize('json', artists)
+        # a bit of hack because it appears handlebars.js can't iterate over an unnamed array
+        return HttpResponse('''{{"artists":{0}}}'''.format(serialized_artists), mimetype='application/json')
+
     return render_to_response(
         'djukebox/artist_list.html',
         {'artists': artists,},
@@ -85,6 +109,10 @@ def artist_list(request):
 @login_required
 def artist_discography(request, artist_id):
     """View providing a list of songs and albums by a specific artist."""
+
+
+    if request.is_ajax():
+        artist = Artist.objects.prefetch_related('album_set').get(id=artist_id, user_id=request.user.id)
 
     artist = get_object_or_404(Artist, id=artist_id)
     albums = Album.objects.filter(artist=artist)

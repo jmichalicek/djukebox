@@ -63,6 +63,10 @@ class Artist(models.Model):
     def __unicode__(self):
         return u'%s' %self.name
 
+    @models.permalink
+    def get_absolute_url(self):
+        return ('djukebox-artist', (), {'artist_id': self.id})
+
 class AudioFile(models.Model):
     track = models.ForeignKey('Track', db_index=True)
     file = models.FileField(upload_to='djukebox/tracks/%Y/%m/%d/')
@@ -146,7 +150,7 @@ class OggFile(AudioFile):
         return tags.get('title', [''])[0].strip()
 
     def get_artist(self):
-        """Return the artist rom Vorbis comments."""
+        """Return the artist from Vorbis comments."""
         file_path = os.path.join(settings.MEDIA_ROOT, self.file.name)
         tags = OggVorbis(file_path)
         return tags.get('artist', [''])[0].strip()
@@ -186,6 +190,22 @@ class Track(models.Model):
 
     def __unicode__(self):
         return u'%s' %self.title
+
+    def mp3_stream_url(self):
+        try:
+            m = Mp3File.objects.get(track=self)
+        except ObjectDoesNotExist:
+            return ''
+        else:
+            return m.get_stream_url()
+
+    def ogg_stream_url(self):
+        try:
+            o = OggFile.objects.get(track=self)
+        except ObjectDoesNotExist:
+            return ''
+        else:
+            return o.get_stream_url()
 
 def delete_audio_files(sender, **kwargs):
     audio_file = kwargs.get('instance')
