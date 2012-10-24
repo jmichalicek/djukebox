@@ -4,6 +4,13 @@
 {% endblock other_css %}
 
 {% block body %}
+<div class="navbar navbar-fixed-top">
+  <div class="navbar-inner">
+    <div class="container">
+      <a class="brand" href="{% url djukebox-root %}#">Djukebox</a>
+    </div>
+  </div>
+</div>
 <div class="container" style="height: 90%">
   <div class="row" style="height: 100%">
     <div class="span2 sidebar">
@@ -12,12 +19,11 @@
         <li><a href="{% url djukebox-root %}#albums/">Albums</a></li>
         <li><a href="{% url djukebox-root %}#artists/">Artists</a></li>
         <li><a href="{% url djukebox-root %}#tracks/">All Songs</a></li>
-        <li><a href="{% url djukebox-upload %}">Upload</a></li>
+        <li><a id="upload_link" style="cursor:pointer">Upload</a></li>
         <li><a href="{% url djukebox-logout %}">Logout</a></li>
       </ul>
     </div>
     <div class="span10" id="content" name="content" style="height: 100%">
-      
     </div>
   </div>
   <div class="row">
@@ -32,18 +38,40 @@
     <a class="close" href="#">&times;</a>
     <span id="upload_status_message"></span>
   </div>
-</div>
 
-<iframe id="track_upload" name="track_upload" src="{% url djukebox-upload %}" style="display: none"></iframe>
+  <div id="progressmodal" class="modal hide span3" data-backdrop="false" style="top:42px; left: auto; right:0px; margin: 10px; padding: 0px">
+    <div class="modal-header">
+      <h3>Upload Progress</h3>
+    </div>
+    <div class="modal-body">
+      <div id="uploadprogress" class="progress progress-striped span2">
+	<div id="pbar" class="bar" style="width: 0%;"></div>
+      </div>
+    </div>
+  </div>
+
+  <div style="display:hidden;">
+    <form name="upload_file" enctype="multipart/form-data" method="post" action="{% url djukebox-iframe-upload %}" target="track_upload">
+        <input id="id_file" type="file" name="file" />
+      </form>
+  </div>
+
+</div>
 
 <script type="text/javascript" src="{{STATIC_URL}}djukebox/js/handlebars.js"></script>
 <script type="text/javascript" src="{{STATIC_URL}}djukebox/js/jquery-csrf.js"></script>
+<script type="text/javascript" src="{{ STATIC_URL }}djukebox/js/jquery.ui.widget.js"></script>
+<script src="{{ STATIC_URL }}djukebox/js/jquery.fileupload.js"></script>
+
 <script type="text/javascript">
 /* This could maybe be done better to pop up overlapping alerts or something */
 $(document).ready(function() {
 
     //obj to store pre-compiled templates
     var compiled_templates = new Object();
+    {# this template is inlined as documented above #}
+    compiled_templates.FILE_UPLOAD = Handlebars.compile($('#upload-template').html());
+
     var ARTISTLIST = 'artist-list.js';
     var ARTISTALBUMS = 'artist-albums.js';
     var ALBUM = 'album.js';
@@ -66,14 +94,12 @@ $(document).ready(function() {
          });
     }
 
-    function switchView(template, context){
+    function switchView(template, context, callback){
         if(template in compiled_templates) {
             $('#content').html(compiled_templates[template](context));
-            // maybe this should be passed in callbacks
-            $('.track_item').dblclick(function(obj) {
-               rebuildAudioPlayer($(this).attr("ogg"), $(this).attr("mp3"));
-            });
-
+            if(typeof callback === 'function') {
+                callback();
+            }
         } else {
             $.when(getTemplateAjax(template, context)).then(function() {
                 switchView(template, context);
@@ -123,6 +149,44 @@ $(document).ready(function() {
         });
     }
 
+    function bindPlayer() {
+        $('.track_item').dblclick(function(obj) {
+            rebuildAudioPlayer($(this).attr("ogg"), $(this).attr("mp3"));
+        });
+    }
+
+    function bindUpload() {
+        $('#id_file').hide();
+        $('#upload_link').click(function() {
+            $('#id_file').click();
+        });
+
+        $('#id_file').fileupload({
+            dataType: 'json',
+            done: function (e, data) {
+                 $('#pbar').css(
+                    'width',
+                    '0%'
+                );
+                $('#progressmodal').modal('hide');
+
+                $.each(data.result, function (index, file) {
+                    //$('<p/>').text(file.name).appendTo(document.body);
+                });
+            },
+            progressall: function(e, data) {
+                var progress = parseInt(data.loaded / data.total * 100, 10);
+                $('#pbar').css(
+                    'width',
+                    progress + '%'
+                );
+            },
+            start: function(e, data) {
+              $('#progressmodal').modal('show');
+            },
+        });
+    }
+
     function getViewData() {
         var fragments = window.location.hash.replace('#', '').split("/");
 
@@ -131,7 +195,7 @@ $(document).ready(function() {
         switch(fragments[0]) {
           case 'album':
              $.when(albumAjax(fragments[1])).then(function(data) {
-                 switchView(ALBUM, data);
+                 switchView(ALBUM, data, bindPlayer);
              });
              break;
 
@@ -143,7 +207,7 @@ $(document).ready(function() {
 
           case 'artist':
             $.when(artistAjax(fragments[1]), albumsByArtistAjax(fragments[1])).then(function(artist, albums){
-              switchView(ARTISTALBUMS, {"artist": artist[0], "albums": albums[0].albums});
+              switchView(ARTISTALBUMS, {"artist": artist[0], "albums": albums[0].albums}, bindPlayer);
             });
             break;
 
@@ -169,7 +233,7 @@ $(document).ready(function() {
                 cache: true,
                 dataType: "json",
                 success: function(data) {
-                    switchView(TRACKLIST, data);
+                    switchView(TRACKLIST, data, bindPlayer);
                 }
              });
             break;
@@ -215,6 +279,9 @@ $(document).ready(function() {
         player.appendTo($("#audio_player_div"));
     }
 
+
+    bindUpload();
+
     //preload and compile templates on page load
     //register hash changed listener
     //and call
@@ -224,22 +291,9 @@ $(document).ready(function() {
         getViewData();
     });
 
-    $("#track_upload").load(function() {
-        var json = jQuery.parseJSON($('#track_upload').contents().text());
 
-        $('#upload_status_alert').removeClass("alert-success alert-error");
-        if(json.track_upload.status == "success") {
-            $('#upload_status_message').text('Successfully uploaded ' + json.track_upload.title);
-            $('#upload_status_alert').addClass("alert-success");
-        } else {
-            //For now just grab the first one.  Need to implement a better alert system
-            //which can deal with multiple alerts at once
-            $('#upload_status_message').text('Error uploading: ' + json.track_upload.errors[0]);
-            $('#upload_status_alert').addClass("alert-error");
-        }
-        $('#upload_status_alert').show();
-    });
 
+    // no alerts at the moment but leaving this here because they will get added back
     //The built in bootstrap close removes the alert div from the dom
     //and then it does not reappear since it's completely gone
     $('.alert .close').live('click',function(){

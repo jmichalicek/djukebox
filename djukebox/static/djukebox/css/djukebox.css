@@ -4,3 +4,8 @@ body {
     padding-top: 90px;
     position: relative;
 }
+
+.bar {
+    height: 18px;
+    background: green;
+}
