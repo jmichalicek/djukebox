@@ -1,7 +1,8 @@
 <div class="span2 thumbnail" style="height: 25%">
 <!-- album art to go here -->
-    <h5>{{title}}</h5><br />
-    <p>{{artist.name}} <!-- other album details --></p>
+    <h3>{{title}}</h3><br />
+    <h5><a href="#artist/{{artist.id}}/">{{artist.name}}</a></h5>
+    <!-- add more details -->
 </div>
 <div class="span10">
   {{#each tracks }}

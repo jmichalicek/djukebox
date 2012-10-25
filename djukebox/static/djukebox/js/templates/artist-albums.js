@@ -5,7 +5,7 @@
     {{#each albums}}
     <div class="row">
     <div class="span2 well">
-        {{this.title}}
+        <a href="#album/{{this.id}}">{{this.title}}</a>
     </div>
     <div class="span7">
     <table name="album_table" id="album_{{this.id}}" class="table table-bordered">
