@@ -4,9 +4,10 @@ automatically encode an ogg version using sox or ffmpeg asynchronously via celer
 which shows the tracks you currently have loaded and will play them (with a few bugs, depending on the web browser.
 
 Requirements:
-Django 1.3
+Django 1.3+
 Celery - I believe 2.4+ will work, I am using 2.5.  You need a version with the @task decorator in celery.task
 SoX or ffmpeg
+Tastypie - be sure to put it in your installed apps
 
 Configuration settings for settings.py - it should be pretty clear what these are:
 DJUKEBOX_AUDIO_ENCODER = 'sox' # or 'ffmpeg' or 'avconv'
