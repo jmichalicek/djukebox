@@ -46,12 +46,14 @@ def main(request):
         context_instance=RequestContext(request)
     )
 
+@cache_control(no_cache=True)
 @login_required
 @transaction.commit_on_success
 def upload_track(request, hidden_frame=False):
     # TODO: break this up into smaller functions
     # TODO: this needs to deal with re-encoding tracks as mp3 and ogg and the Track model
     # probably also needs updated to deal with this
+
     if request.method == 'POST':
         upload_form = TrackUploadForm(request.POST, request.FILES)
         if upload_form.is_valid():
@@ -108,26 +110,24 @@ def upload_track(request, hidden_frame=False):
             # TODO: Use messages framework for these track upload success/fail messages
             # as well as get celery tasks to do that. https://github.com/codeinthehole/django-async-messages maybe?
             # ...or write my own for fun.
-            if mimetype not in app_settings.UPLOAD_FILE_TYPES:
+            if mimetype in app_settings.UPLOAD_FILE_TYPES:
+                if app_settings.CONVERT_UPLOADS:
+                    if mimetype in ogg_content_types:
+                        convert_file_to_mp3.delay(audio_file.id)
+                    elif mimetype in mp3_content_types:
+                        convert_file_to_ogg.delay(audio_file.id)
+
+                logger.debug('Successfully uploaded track {0} with id {1}'.format(track.title, track.id))
+                json_response_data = {'track_upload': {'status': 'success', 'title': track.title}}
+            else:
                 # Delete the Track and AudioFile and return an error
                 json_response_data = '{"track_upload": {"status": "error", "error": "invalid file type %s"}}' %mimetype
                 audio_file.delete()
                 track.delete()
                 logger.warn('mimetypes.guess_type detected different content type than http header specified')
-            elif app_settings.CONVERT_UPLOADS:
-                if mimetype in ogg_content_types:
-                    convert_file_to_mp3.delay(audio_file.id)
-                elif mimetype in mp3_content_types:
-                    convert_file_to_ogg.delay(audio_file.id)
-
-                logger.debug('Successfully uploaded track %s with id %s' %(track.title, track.id))
-                #json_response_data = '{"track_upload": {"status": "success", "title": "%s"}}' %track.title
-                json_response_data = {'track_upload': {'status': 'success', 'title': track.title}}
-
         else:
             # Get the errors in a cleaner way
             logger.debug('{"track_upload": {"status": "error", "errors": %s}}' %upload_form.errors)
-            #json_response_data = '{"track_upload": {"status": "error", "errors": %s}}' %dict(upload_form.errors.values())
             json_response_data = {'track_upload': {'status': 'error', 'errors': upload_form.errors.values()}}
 
 
