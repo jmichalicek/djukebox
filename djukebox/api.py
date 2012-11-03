@@ -3,6 +3,11 @@ from tastypie.constants import ALL, ALL_WITH_RELATIONS
 from tastypie.authentication import Authentication
 from tastypie.authorization import DjangoAuthorization, Authorization
 from tastypie.resources import ModelResource
+
+from django.conf import settings
+from django.middleware.csrf import _sanitize_token, constant_time_compare
+from django.utils.http import same_origin
+
 from models import Album, Artist, Track
 
 
