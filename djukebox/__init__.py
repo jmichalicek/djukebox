@@ -1,0 +1,3 @@
+"""
+The Djukebox Django app
+"""

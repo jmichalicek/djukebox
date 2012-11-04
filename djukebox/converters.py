@@ -1,3 +1,7 @@
+"""
+Default audio format transcoding classes
+"""
+
 import os
 import subprocess
 import logging
@@ -18,6 +22,7 @@ class ConverterBase(object):
     # several files.  Does it matter?
 
     def _get_target_filename(self, source_path, extension):
+        """Returns the full path where a transcoded files should be saved"""
 
         # Takes full file path of setings.MEDIA_ROOT/whatever/file.ext
         # where /whatever/ is the upload_to attribute on the FileField
@@ -31,6 +36,8 @@ class ConverterBase(object):
 
     # or should this take an actual file object like the ogg_file
     def _save(self, file_class, source_file, target_filename):
+        """Save the transcoded file in the appropriate place"""
+
         media_directory = os.path.dirname(source_file.file.name)
         new_file = file_class(track=source_file.track)
         new_file.file.name = os.path.join(media_directory, os.path.basename(target_filename))
@@ -48,6 +55,8 @@ class AvconvOggToMp3(ConverterBase):
     """Create mp3 files from ogg files using avconv"""
 
     def convert(self, ogg_file):
+        """Convert an ogg file to an mp3 with avconv"""
+
         source_path = os.path.join(settings.MEDIA_ROOT, ogg_file.file.name)
         target_filename = self._get_target_filename(source_path, 'mp3')
 
@@ -62,11 +71,13 @@ class FFMpegOggToMp3(ConverterBase):
     """Create mp3 files from ogg files using FFMpeg."""
 
     def convert(self, ogg_file):
+        """Convert an ogg file to mp3 with FFMpeg"""
+
         source_path = os.path.join(settings.MEDIA_ROOT, ogg_file.file.name)
         target_filename = self._get_target_filename(source_path, 'mp3')
 
         logger.debug('Converting %s to %s using ffmpeg' %(source_path, target_filename))
-        #TODO: Use Kenneth Reitz' module for subprocess handling
+        # TODO: Use Kenneth Reitz' module for subprocess handling
         subprocess.call([app_settings.FFMPEG_BIN, '-i', source_path, target_filename])
 
         logger.debug('Finished encoding.  Saving AudioFile')
@@ -79,6 +90,8 @@ class SoxOggToMp3(ConverterBase):
     # ogg_file is an OggFile.  Any AudioFile or subclass should work
     # as long as the actual file is an ogg
     def convert(self, ogg_file):
+        """Convert an ogg file to mp3 with sox"""
+
         source_path = os.path.join(settings.MEDIA_ROOT, ogg_file.file.name)
         target_filename = self._get_target_filename(source_path, 'mp3')
 
@@ -91,6 +104,8 @@ class SoxOggToMp3(ConverterBase):
 class AvconvMp3ToOgg(ConverterBase):
     """Create ogg files from mp3 files using avconv."""
     def convert(self, mp3_file):
+        """Create ogg files from mp3 files using avconv."""
+
         source_path = os.path.join(settings.MEDIA_ROOT, mp3_file.file.name)
         target_filename = self._get_target_filename(source_path, extension='ogg')
 
@@ -104,7 +119,10 @@ class AvconvMp3ToOgg(ConverterBase):
 
 class FFMpegMp3ToOgg(ConverterBase):
     """Create ogg files from mp3 files using ffmpeg"""
+
     def convert(self, mp3_file):
+        """Create ogg files from mp3 files using ffmpeg"""
+
         source_path = os.path.join(settings.MEDIA_ROOT, mp3_file.file.name)
         target_filename = self._get_target_filename(source_path, extension='ogg')
 
@@ -117,7 +135,9 @@ class FFMpegMp3ToOgg(ConverterBase):
 
 class SoxMp3ToOgg(ConverterBase):
     """Create ogg files from mp3 files using sox"""
+
     def convert(self, mp3_file):
+        """Create ogg files from mp3 files using sox"""
         source_path = os.path.join(settings.MEDIA_ROOT, mp3_file.file.name)
         #oga is really correct, but sox doesn't like oga
         target_filename = self._get_target_filename(source_path, extension='ogg')

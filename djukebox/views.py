@@ -1,16 +1,17 @@
-from django.contrib import messages
+"""
+Djukebox Views
+"""
+
 from django.contrib.auth.decorators import login_required
-from django.core import serializers
 from django.core.urlresolvers import reverse
-from django.core.exceptions import ObjectDoesNotExist
 from django.conf import settings
 from django.db import transaction
 from django.shortcuts import render_to_response, get_object_or_404
 from django.template import RequestContext
-from django.views.decorators.cache import cache_control, cache_page
-from django.http import Http404, HttpResponseRedirect, HttpResponse
+from django.views.decorators.cache import cache_control
+from django.http import HttpResponseRedirect, HttpResponse
 
-from models import Album, Artist, Track, AudioFile, OggFile, Mp3File
+from models import Album, Track, OggFile, Mp3File
 from forms import TrackUploadForm
 from tasks import convert_file_to_ogg, convert_file_to_mp3
 import app_settings
@@ -18,16 +19,17 @@ import app_settings
 import os
 import mimetypes
 import logging
-import simplejson
 
 logger = logging.getLogger(__name__)
 
 @cache_control(no_cache=True)
 @login_required
-def stream_track(request, track_id, format):
+def stream_track(request, track_id, file_format):
+    """Stream out the audio file for a track"""
+
     # TODO: Rename this to stream_track?
-    # format is a callable, the class of audio file to play such as Mp3File or OggFile
-    track = get_object_or_404(format, track__id=track_id, track__user=request.user)
+    # file_format is a callable, the class of audio file to play such as Mp3File or OggFile
+    track = get_object_or_404(file_format, track__id=track_id, track__user=request.user)
     file_path = os.path.join(settings.MEDIA_ROOT, track.file.name)
     # ogg files encoded with pysox seem to be getting a media type of (audio/ogg, none) as a tuple
     # which throws off firefox when it gets the content-type header.  Opera is ok with it, though.
@@ -39,6 +41,7 @@ def stream_track(request, track_id, format):
 
 @login_required
 def main(request):
+    """The primary Djukebox view which renders the UI"""
 
     return render_to_response(
         'djukebox/main.html',
@@ -50,6 +53,8 @@ def main(request):
 @login_required
 @transaction.commit_on_success
 def upload_track(request, hidden_frame=False):
+    """Handle the upload of an audio file and create a new Track()"""
+
     # TODO: break this up into smaller functions
     # TODO: this needs to deal with re-encoding tracks as mp3 and ogg and the Track model
     # probably also needs updated to deal with this
@@ -121,13 +126,13 @@ def upload_track(request, hidden_frame=False):
                 json_response_data = {'track_upload': {'status': 'success', 'title': track.title}}
             else:
                 # Delete the Track and AudioFile and return an error
-                json_response_data = '{"track_upload": {"status": "error", "error": "invalid file type %s"}}' %mimetype
+                json_response_data = '{"track_upload": {"status": "error", "error": "invalid file type %s"}}' % mimetype
                 audio_file.delete()
                 track.delete()
                 logger.warn('mimetypes.guess_type detected different content type than http header specified')
         else:
             # Get the errors in a cleaner way
-            logger.debug('{"track_upload": {"status": "error", "errors": %s}}' %upload_form.errors)
+            logger.debug('{"track_upload": {"status": "error", "errors": %s}}' % upload_form.errors)
             json_response_data = {'track_upload': {'status': 'error', 'errors': upload_form.errors.values()}}
 
 

@@ -1,9 +1,12 @@
-from django.conf.urls.defaults import *
-from tastypie.api import Api, NamespacedApi
+"""
+Djukebox URLs
+"""
 
-#from views import *
+from django.conf.urls.defaults import patterns, url, include
+from tastypie.api import NamespacedApi
+
 from models import Mp3File, OggFile
-from api import *
+from api import ArtistResource, AlbumResource, TrackResource
 
 # There must be a better way
 v1_api = NamespacedApi(api_name='v1', urlconf_namespace='djukeboxapi')

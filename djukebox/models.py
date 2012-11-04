@@ -1,3 +1,7 @@
+"""
+Djukebox Djanog models
+"""
+
 from django.db import models
 from django.contrib.auth.models import User
 from django.core.exceptions import ObjectDoesNotExist
@@ -31,7 +35,7 @@ class Album(models.Model):
         unique_together = ['title', 'artist', 'user']
 
     def __unicode__(self):
-        return u'%s' %self.title
+        return u'%s' % self.title
 
     @classmethod
     def album_from_metadata(cls, audio_file):
@@ -62,7 +66,7 @@ class Artist(models.Model):
     DEFAULT_ARTIST = 'Unknown Artist'
 
     def __unicode__(self):
-        return u'%s' %self.name
+        return u'%s' % self.name
 
     @models.permalink
     def get_absolute_url(self):
@@ -74,7 +78,7 @@ class AudioFile(models.Model):
     created = models.DateTimeField(db_index=True, auto_now_add=True, blank=True)
 
     def __unicode__(self):
-        return u'%s' %self.file.name
+        return u'%s' % self.file.name
 
 class Mp3File(AudioFile):
     """An mp3 audio file"""
@@ -132,7 +136,7 @@ class Mp3File(AudioFile):
 
     def get_stream_url(self):
         if app_settings.USE_MEDIA_URL:
-            url = '%s%s' %(settings.MEDIA_URL, self.file.name)
+            url = '%s%s' % (settings.MEDIA_URL, self.file.name)
         else:
             url =  reverse('djukebox-stream-mp3', args=[str(self.track.id)])
 
@@ -170,7 +174,7 @@ class OggFile(AudioFile):
 
     def get_stream_url(self):
         if app_settings.USE_MEDIA_URL:
-            url = '%s%s' %(settings.MEDIA_URL, self.file.name)
+            url = '%s%s' % (settings.MEDIA_URL, self.file.name)
         else:
             url = reverse('djukebox-stream-ogg', args=[str(self.track.id)])
 
@@ -190,23 +194,23 @@ class Track(models.Model):
     DEFAULT_TITLE = 'Unknown'
 
     def __unicode__(self):
-        return u'%s' %self.title
+        return u'%s' % self.title
 
     def mp3_stream_url(self):
         try:
-            m = Mp3File.objects.get(track=self)
+            mp3 = Mp3File.objects.get(track=self)
         except ObjectDoesNotExist:
             return ''
         else:
-            return m.get_stream_url()
+            return mp3.get_stream_url()
 
     def ogg_stream_url(self):
         try:
-            o = OggFile.objects.get(track=self)
+            ogg = OggFile.objects.get(track=self)
         except ObjectDoesNotExist:
             return ''
         else:
-            return o.get_stream_url()
+            return ogg.get_stream_url()
 
 def delete_audio_files(sender, **kwargs):
     audio_file = kwargs.get('instance')

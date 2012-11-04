@@ -1,3 +1,6 @@
+"""
+Default settings for Djukebox
+"""
 from django.conf import settings
 
 AVCONV_BIN = getattr(settings, 'DJUKEBOX_AVCONV_BIN', '/usr/bin/avconv') #where it lives in debian

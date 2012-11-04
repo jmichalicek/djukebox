@@ -1,7 +1,11 @@
+"""
+REST API for the Djukebox app
+"""
+
 from tastypie import fields
-from tastypie.constants import ALL, ALL_WITH_RELATIONS
+from tastypie.constants import ALL_WITH_RELATIONS
 from tastypie.authentication import Authentication
-from tastypie.authorization import DjangoAuthorization, Authorization
+from tastypie.authorization import Authorization
 from tastypie.resources import ModelResource
 
 from django.conf import settings
@@ -72,7 +76,12 @@ class InlineToggleMixIn(object):
     # handy dehydrate_related from
     # http://chrismeyers.org/2012/06/25/tastypie-inline-aka-nested-fulltrue-embedded-relationship-dynamically-via-get-parameter/
     def dehydrate_related(self, bundle, related_resource):
-
+        """
+        Overrides the standard RelatedField.dehydrate_related().
+        Returns the full details of a related resource if it is
+        specified in the URI as if it were defined with full=True
+        otherwise behaves as default, returning a URI to the related resource.
+        """
         # this is not 100% ideal because the resource_name and collection_name may not be
         # what the end user sees, depending on how things are named.  They see the attribute name
         resource_name = related_resource._meta.resource_name
@@ -91,9 +100,11 @@ class InlineToggleMixIn(object):
 # and ToOneFieldInlineToggle then an infinite loop can occur.
 # Maybe there's a good way to limit the depth of InlineToggleMixIn?
 class ToManyFieldDetailToggle(InlineToggleMixIn, fields.ToManyField):
+    """ToManyField where inclusion of details inline can be toggled via the URI"""
     pass
 
 class ToOneFieldDetailToggle(InlineToggleMixIn, fields.ToOneField):
+    """ToOneField where inclusion of details inline can be toggled via the URI"""
     pass
 
 
@@ -102,15 +113,19 @@ class ToOneFieldDetailToggle(InlineToggleMixIn, fields.ToOneField):
 
 
 class AlbumResource(ModelResource):
+    """Tastypie resource representing djukebox.models.Album()"""
+
     tracks = ToManyFieldDetailToggle('djukebox.api.TrackResource', 'track_set')
     artist = ToOneFieldDetailToggle('djukebox.api.ArtistResource', 'artist')
 
     class Meta:
+        """Meta class for AlbumResource"""
+
         queryset = Album.objects.all()
         resource_name = 'album'
         collection_name = 'albums'
-        list_allowed_methods=['get']
-        detail_allowed_methods=['get']
+        list_allowed_methods = ['get']
+        detail_allowed_methods = ['get']
         authentication = SessionAuthentication()
         authorization = Authorization()
         filtering = {
@@ -132,14 +147,18 @@ class AlbumResource(ModelResource):
 
 
 class ArtistResource(ModelResource):
+    """Tastypie resource representing djukebox.models.Artist()"""
+
     #albums = ToManyFieldDetailToggle('djukebox.api.AlbumResource', 'album_set')
 
     class Meta:
+        """Meta class for ArtistResource"""
+
         queryset = Artist.objects.all()
         resource_name = 'artist'
         collection_name = 'artists'
-        list_allowed_methods=['get']
-        detail_allowed_methods=['get']
+        list_allowed_methods = ['get']
+        detail_allowed_methods = ['get']
         authentication = SessionAuthentication()
         authorization = Authorization()
         filtering = {
@@ -164,14 +183,18 @@ class ArtistResource(ModelResource):
 
 
 class TrackResource(ModelResource):
+    """Tastypie resource representing djukebox.models.Track()"""
+
     album = ToOneFieldDetailToggle('djukebox.api.AlbumResource', 'album')
 
     class Meta:
+        """Meta class for TrackResource"""
+
         queryset = Track.objects.all()
         resource_name = 'track'
         collection_name = 'tracks'
-        list_allowed_methods=['get']
-        detail_allowed_methods=['get']
+        list_allowed_methods = ['get']
+        detail_allowed_methods = ['get']
         authentication = SessionAuthentication()
         authorization = Authorization()
         filtering = {

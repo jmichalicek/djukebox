@@ -1,11 +1,16 @@
+"""
+django.contrib.admin classes and registration for Djukebox
+"""
 from django.contrib import admin
-from models import *
+from models import Album, AudioFile, Artist, Mp3File, OggFile, Track
 
 class TrackAdmin(admin.ModelAdmin):
+    """ModelAdmin for Track()"""
     model = Track
     list_filter = ('album', 'album__artist')
 
 class AlbumAdmin(admin.ModelAdmin):
+    """ModelAdmin for Album()"""
     model = Album
     list_filter = ('artist', )
 

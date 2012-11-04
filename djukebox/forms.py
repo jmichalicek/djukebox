@@ -1,13 +1,24 @@
+"""
+Forms for Djukebox
+"""
+
 from django import forms
 from django.template.defaultfilters import filesizeformat
 
-from models import AudioFile
 from app_settings import UPLOAD_FILE_MAX_SIZE, UPLOAD_FILE_TYPES
 
+
 class TrackUploadForm(forms.Form):
+    """Form for uploading an audio file to create a Track()"""
+
     file = forms.FileField(label='Select a song to upload')
 
     def clean_file(self):
+        """
+        Overrides default forms.Form.clean_file()
+        Checks to make sure the file is an appropriate file type and size
+        """
+
         #from http://stackoverflow.com/a/4855340
         data = self.cleaned_data['file']
         if data:
