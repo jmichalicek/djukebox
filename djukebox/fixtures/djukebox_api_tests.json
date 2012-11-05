@@ -1,0 +1,92 @@
+[
+    {
+        "fields": {
+            "date_joined": "2012-05-12T13:32:41.488Z", 
+            "email": "example@example.com", 
+            "first_name": "", 
+            "groups": [], 
+            "is_active": true, 
+            "is_staff": false, 
+            "is_superuser": false, 
+            "last_name": "", 
+            "password": "SETME", 
+            "user_permissions": [], 
+            "username": "justin"
+        }, 
+        "model": "auth.user", 
+        "pk": 1
+    }, 
+    {
+        "fields": {
+            "created": "2012-08-08T02:29:02.552Z", 
+            "name": "Justin Michalicek", 
+            "user": 1
+        }, 
+        "model": "djukebox.artist", 
+        "pk": 1
+    }, 
+    {
+        "fields": {
+            "created": "2012-10-22T17:39:57.835Z", 
+            "name": "Possessed", 
+            "user": 1
+        }, 
+        "model": "djukebox.artist", 
+        "pk": 2
+    }, 
+    {
+        "fields": {
+            "artist": 1, 
+            "cover_art": "", 
+            "created": "2012-08-08T02:29:02.554Z", 
+            "title": "No Album", 
+            "user": 1
+        }, 
+        "model": "djukebox.album", 
+        "pk": 1
+    }, 
+    {
+        "fields": {
+            "artist": 2, 
+            "cover_art": "", 
+            "created": "2012-10-22T17:39:57.838Z", 
+            "title": "Eyes Of Horror", 
+            "user": 1
+        }, 
+        "model": "djukebox.album", 
+        "pk": 2
+    }, 
+    {
+        "fields": {
+            "album": 1, 
+            "created": "2012-08-08T02:29:02.538Z", 
+            "title": "hard rock", 
+            "track_number": null, 
+            "user": 1
+        }, 
+        "model": "djukebox.track", 
+        "pk": 1
+    }, 
+    {
+        "fields": {
+            "album": 1, 
+            "created": "2012-08-08T02:29:11.982Z", 
+            "title": "Thrash 1", 
+            "track_number": null, 
+            "user": 1
+        }, 
+        "model": "djukebox.track", 
+        "pk": 2
+    }, 
+    {
+        "fields": {
+            "album": 2, 
+            "created": "2012-10-24T21:13:15.662Z", 
+            "title": "Storm In My Mind", 
+            "track_number": null, 
+            "user": 1
+        }, 
+        "model": "djukebox.track", 
+        "pk": 3
+    }
+]

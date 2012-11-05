@@ -16,8 +16,10 @@ from mutagen.id3 import ID3, TPE2
 
 from models import *
 
+import json
 import shutil
 import os
+import types
 
 # TODO: For many test cases there needs to be either some audio files included or something which will generate a dummy audio files.
 
@@ -31,6 +33,7 @@ def create_album(user, artist, title='Test Album'):
     return album
 
 # Using pre-created silent files for now.
+# These could be used to create silent files on the fly
 #def ffmpeg_create_empty_mp3():
 #    """Create a 1 second silent mp3 using ffmpeg"""
 #    ffmpeg -ar 44100 -acodec pcm_s16le -f s16le -ac 2 -i /dev/zero -t 00:00:01 test.mp3
@@ -46,6 +49,7 @@ def create_album(user, artist, title='Test Album'):
 #def sox_create_empty_ogg():
 #    """Create a 1 second silent ogg using sox"""
 #    sox -n -t ogg silent.ogg trim 0 1
+
 
 class MainViewTests(TestCase):
     """Test cases for views.home"""
@@ -64,6 +68,7 @@ class MainViewTests(TestCase):
         response = self.client.get(reverse('djukebox-home'))
         self.assertRedirects(response, '%s?next=%s' %(settings.LOGIN_URL, reverse('djukebox-home')))
 
+
 class AudioFileTests(TestCase):
     """Test the AudioFile class"""
     fixtures = ['test_audiofilemodeltests']
@@ -79,11 +84,13 @@ class AudioFileTests(TestCase):
             #source_ogg = os.path.join(current_dir, 'test_audio/silent.ogg')
             #shutil.copyfile(source_ogg, dest_file)
 
+
 class AudioFileUnicodeTests(AudioFileTests):
     """Test the __unicode__() method of the AudioFile class"""
 
     def test__unicode(self):
         self.assertEqual(self.audiofile.file.name, self.audiofile.__unicode__())
+
 
 class OggFileTests(TestCase):
     """Test the OggFile class"""
@@ -129,6 +136,7 @@ class OggFileUnicodeTests(OggFileTests):
     def test__unicode(self):
         self.assertEqual(self.oggfile.file.name, self.oggfile.__unicode__())
 
+
 class OggFileGetTitleTests(OggFileTests):
     """Test the get_title() method of the OggFile class"""
 
@@ -141,6 +149,7 @@ class OggFileGetTitleTests(OggFileTests):
         self.assertEqual('Fake Title', self.oggfile.get_title())
         OggVorbis.get = orig
 
+
 class OggFileGetArtistTests(OggFileTests):
     """Test the get_artist() method of the OggFile class"""
 
@@ -152,6 +161,7 @@ class OggFileGetArtistTests(OggFileTests):
         OggVorbis.get = fake_get
         self.assertEqual('Fake Artist', self.oggfile.get_artist())
         OggVorbis.get = orig
+
 
 class OggFileGetAlbumTests(OggFileTests):
     """Test the get_album() method of the OggFile class"""
@@ -210,6 +220,7 @@ class Mp3FileUnicodeTests(Mp3FileTests):
     def test__unicode(self):
         self.assertEqual(self.mp3file.file.name, self.mp3file.__unicode__())
 
+
 class Mp3FileGetTitleTests(Mp3FileTests):
     """Test the get_title() method of the OggFile class"""
 
@@ -221,7 +232,6 @@ class Mp3FileGetTitleTests(Mp3FileTests):
         EasyID3.get = fake_get
         self.assertEqual('Fake Title', self.mp3file.get_title())
         EasyID3.get = orig
-
 
 
 class Mp3SourceConversionTests(TestCase):
@@ -244,6 +254,7 @@ class Mp3SourceConversionTests(TestCase):
 
         if os.path.exists(dest_file):
             os.remove(dest_file)
+
 
 class OggSourceConversionTests(TestCase):
     fixtures = ['test_oggfilemodeltests']
@@ -278,3 +289,183 @@ class FileConversionUnitTests(TestCase):
 
     def test_DjukeboxOggFromMp3(self):
         pass
+
+
+# Master branch has handy ResourceTestCase
+class ApiTests(TestCase):
+    """Test the REST API"""
+
+    fixtures = ['djukebox_api_tests']
+
+    def setUp(self):
+        super(ApiTests, self).setUp()
+        self.user = User.objects.get(id=1)
+        self.user.set_password('test')
+        self.user.save()
+
+    def tearDown(self):
+        super(ApiTests, self).tearDown()
+        self.client.logout()
+
+
+class AlbumResourceTests(ApiTests):
+    """Test usage of the AlbumResource"""
+
+    def test_get_list_not_logged_in(self):
+        self.client.logout()
+        request_args = {'resource_name': 'album',
+                        'api_name': 'v1'}
+
+        response = self.client.get(reverse(
+                'api_dispatch_list',
+                kwargs=request_args))
+
+        self.assertEqual(response.status_code, 401)
+
+
+    def test_get_list(self):
+        """Test the default behavior getting the AlbumResource list"""
+
+        self.client.login(username=self.user.username,
+                          password='test')
+
+        request_args = {'resource_name': 'album',
+                        'api_name': 'v1'}
+
+        response = self.client.get(reverse(
+                'api_dispatch_list',
+                kwargs=request_args))
+
+        self.assertEqual(response.status_code, 200)
+        self.assertTrue(response['Content-Type'].startswith('application/json'))
+
+        returned = json.loads(response.content)
+        self.assertTrue('albums' in returned)
+        self.assertEqual(len(returned['albums']), 2)
+        first = returned['albums'][0]
+        self.assertEqual(type(first['artist']), types.UnicodeType)
+        self.assertEqual(type(first['tracks'][0]), types.UnicodeType)
+
+    def test_get_list_artist_details(self):
+        """Test getting the AlbumResource list with Artist details"""
+
+        self.client.login(username=self.user.username,
+                          password='test')
+
+        request_args = {'resource_name': 'album',
+                        'api_name': 'v1'}
+
+        response = self.client.get(reverse(
+                'api_dispatch_list',
+                kwargs=request_args), data={'details': 'artist'})
+
+        self.assertEqual(response.status_code, 200)
+        self.assertTrue(response['Content-Type'].startswith('application/json'))
+
+        returned = json.loads(response.content)
+        self.assertTrue('albums' in returned)
+        self.assertEqual(len(returned['albums']), 2)
+        first = returned['albums'][0]
+        self.assertEqual(type(first['artist']), types.DictType)
+        self.assertTrue('name' in first['artist'])
+
+    def test_get_list_track_details(self):
+        """Test getting the AlbumResource list with Track details"""
+
+        self.client.login(username=self.user.username,
+                          password='test')
+
+        request_args = {'resource_name': 'album',
+                        'api_name': 'v1'}
+
+        response = self.client.get(reverse(
+                'api_dispatch_list',
+                kwargs=request_args), data={'details': 'track'})
+
+        self.assertEqual(response.status_code, 200)
+        self.assertTrue(response['Content-Type'].startswith('application/json'))
+
+        returned = json.loads(response.content)
+        self.assertTrue('albums' in returned)
+        self.assertEqual(len(returned['albums']), 2)
+        first = returned['albums'][0]
+        self.assertEqual(type(first['tracks'][0]), types.DictType)
+        self.assertTrue('title' in first['tracks'][0])
+
+    def test_get_details(self):
+        """Test the default behavior getting the AlbumResource details"""
+
+        album = Album.objects.all()[0]
+
+        self.client.login(username=self.user.username,
+                          password='test')
+
+        request_args = {'resource_name': 'album',
+                        'api_name': 'v1',
+                        'pk': album.pk}
+
+        response = self.client.get(reverse(
+                'api_dispatch_detail',
+                kwargs=request_args))
+
+        self.assertEqual(response.status_code, 200)
+        self.assertTrue(response['Content-Type'].startswith('application/json'))
+
+        returned = json.loads(response.content)
+        self.assertTrue('tracks' in returned)
+        self.assertTrue('title' in returned)
+        self.assertTrue('artist' in returned)
+        self.assertEqual(type(returned['artist']), types.UnicodeType)
+        self.assertEqual(type(returned['tracks'][0]), types.UnicodeType)
+
+    def test_get_details_artist_details(self):
+        """Test the default behavior getting the AlbumResource details"""
+
+        album = Album.objects.all()[0]
+
+        self.client.login(username=self.user.username,
+                          password='test')
+
+        request_args = {'resource_name': 'album',
+                        'api_name': 'v1',
+                        'pk': album.pk}
+
+        response = self.client.get(reverse(
+                'api_dispatch_detail',
+                kwargs=request_args), data={'details': 'artist'})
+
+        self.assertEqual(response.status_code, 200)
+        self.assertTrue(response['Content-Type'].startswith('application/json'))
+
+        returned = json.loads(response.content)
+        self.assertTrue('tracks' in returned)
+        self.assertTrue('title' in returned)
+        self.assertTrue('artist' in returned)
+        self.assertEqual(type(returned['artist']), types.DictType)
+        self.assertEqual(type(returned['tracks'][0]), types.UnicodeType)
+
+    def test_get_details_track_details(self):
+        """Test the default behavior getting the AlbumResource details"""
+
+        album = Album.objects.all()[0]
+
+        self.client.login(username=self.user.username,
+                          password='test')
+
+        request_args = {'resource_name': 'album',
+                        'api_name': 'v1',
+                        'pk': album.pk}
+
+        response = self.client.get(reverse(
+                'api_dispatch_detail',
+                kwargs=request_args), data={'details': 'track'})
+
+        self.assertEqual(response.status_code, 200)
+        self.assertTrue(response['Content-Type'].startswith('application/json'))
+
+        returned = json.loads(response.content)
+        self.assertTrue('tracks' in returned)
+        self.assertTrue('title' in returned)
+        self.assertTrue('artist' in returned)
+        self.assertEqual(type(returned['artist']), types.UnicodeType)
+        self.assertEqual(type(returned['tracks'][0]), types.DictType)
