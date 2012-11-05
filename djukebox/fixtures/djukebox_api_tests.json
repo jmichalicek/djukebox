@@ -28,7 +28,7 @@
     {
         "fields": {
             "created": "2012-10-22T17:39:57.835Z", 
-            "name": "Possessed", 
+            "name": "Justin 2", 
             "user": 1
         }, 
         "model": "djukebox.artist", 
@@ -50,7 +50,7 @@
             "artist": 2, 
             "cover_art": "", 
             "created": "2012-10-22T17:39:57.838Z", 
-            "title": "Eyes Of Horror", 
+            "title": "The Arockalypse", 
             "user": 1
         }, 
         "model": "djukebox.album", 
