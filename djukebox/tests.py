@@ -469,3 +469,62 @@ class AlbumResourceTests(ApiTests):
         self.assertTrue('artist' in returned)
         self.assertEqual(type(returned['artist']), types.UnicodeType)
         self.assertEqual(type(returned['tracks'][0]), types.DictType)
+
+class ArtistResourceTests(ApiTests):
+    """Test usage of the ArtistResource"""
+
+    def test_get_list_not_logged_in(self):
+        self.client.logout()
+        request_args = {'resource_name': 'artist',
+                        'api_name': 'v1'}
+
+        response = self.client.get(reverse(
+                'api_dispatch_list',
+                kwargs=request_args))
+
+        self.assertEqual(response.status_code, 401)
+
+
+    def test_get_list(self):
+        """Test the default behavior getting the AlbumResource list"""
+        self.client.login(username=self.user.username,
+                          password='test')
+
+        request_args = {'resource_name': 'artist',
+                        'api_name': 'v1'}
+
+        response = self.client.get(reverse(
+                'api_dispatch_list',
+                kwargs=request_args))
+
+        self.assertEqual(response.status_code, 200)
+        self.assertTrue(response['Content-Type'].startswith('application/json'))
+
+        returned = json.loads(response.content)
+        self.assertTrue('artists' in returned)
+        self.assertEqual(len(returned['artists']), 2)
+        first = returned['artists'][0]
+        self.assertEqual(type(first['name']), types.UnicodeType)
+
+    def test_get_artist_details(self):
+        """Test the default behavior getting the ArtistResource details"""
+        self.client.login(username=self.user.username,
+                          password='test')
+
+        artist = Artist.objects.all()[0]
+
+        request_args = {'resource_name': 'artist',
+                        'api_name': 'v1',
+                        'pk': artist.pk}
+
+        response = self.client.get(reverse(
+                'api_dispatch_detail',
+                kwargs=request_args))
+
+        self.assertEqual(response.status_code, 200)
+        self.assertTrue(response['Content-Type'].startswith('application/json'))
+
+        returned = json.loads(response.content)
+        self.assertTrue('name' in returned)
+        self.assertEqual(returned['name'], artist.name)
+        self.assertEqual(int(returned['id']), artist.id)
