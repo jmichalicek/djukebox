@@ -528,3 +528,135 @@ class ArtistResourceTests(ApiTests):
         self.assertTrue('name' in returned)
         self.assertEqual(returned['name'], artist.name)
         self.assertEqual(int(returned['id']), artist.id)
+
+class TrackResourceTests(ApiTests):
+    """Test usage of the TrackResource"""
+
+    def test_get_list_not_logged_in(self):
+        self.client.logout()
+        request_args = {'resource_name': 'track',
+                        'api_name': 'v1'}
+
+        response = self.client.get(reverse(
+                'api_dispatch_list',
+                kwargs=request_args))
+
+        self.assertEqual(response.status_code, 401)
+
+    def test_get_list(self):
+        """Test the default behavior getting the TrackResource list"""
+
+        self.client.login(username=self.user.username,
+                          password='test')
+
+        request_args = {'resource_name': 'track',
+                        'api_name': 'v1'}
+
+        response = self.client.get(reverse(
+                'api_dispatch_list',
+                kwargs=request_args))
+
+        self.assertEqual(response.status_code, 200)
+        self.assertTrue(response['Content-Type'].startswith('application/json'))
+
+        returned = json.loads(response.content)
+
+        self.assertTrue('tracks' in returned)
+        self.assertEqual(len(returned['tracks']), 3)
+        first = returned['tracks'][0]
+        self.assertEqual(type(first['album']), types.UnicodeType)
+        self.assertEqual(type(first['title'][0]), types.UnicodeType)
+        self.assertEqual(type(first['ogg_stream_url']), types.UnicodeType)
+        self.assertEqual(type(first['mp3_stream_url']), types.UnicodeType)
+
+    def test_get_list_album_details(self):
+        """Test TrackResource list with album details"""
+
+        self.client.login(username=self.user.username,
+                          password='test')
+
+        request_args = {'resource_name': 'track',
+                        'api_name': 'v1'}
+
+        response = self.client.get(reverse(
+                'api_dispatch_list',
+                kwargs=request_args), data={'details': 'album'})
+
+        self.assertEqual(response.status_code, 200)
+        self.assertTrue(response['Content-Type'].startswith('application/json'))
+
+        returned = json.loads(response.content)
+
+        self.assertTrue('tracks' in returned)
+        self.assertEqual(len(returned['tracks']), 3)
+        first = returned['tracks'][0]
+        self.assertEqual(type(first['album']), types.DictType)
+        self.assertEqual(type(first['title'][0]), types.UnicodeType)
+        self.assertEqual(type(first['ogg_stream_url']), types.UnicodeType)
+        self.assertEqual(type(first['mp3_stream_url']), types.UnicodeType)
+
+        check_track = Track.objects.get(id=int(first['id']))
+        self.assertEqual(first['album']['title'], check_track.album.title)
+
+    def test_get_details(self):
+        """Test the default behavior getting the TrackResource details"""
+
+        track = Track.objects.all()[0]
+
+        self.client.login(username=self.user.username,
+                          password='test')
+
+        request_args = {'resource_name': 'track',
+                        'api_name': 'v1',
+                        'pk': track.pk}
+
+        response = self.client.get(reverse(
+                'api_dispatch_detail',
+                kwargs=request_args))
+
+        self.assertEqual(response.status_code, 200)
+        self.assertTrue(response['Content-Type'].startswith('application/json'))
+
+        returned = json.loads(response.content)
+
+        self.assertTrue('mp3_stream_url' in returned)
+        self.assertTrue('ogg_stream_url' in returned)
+        self.assertTrue('album' in returned)
+        self.assertTrue('title' in returned)
+        self.assertTrue('track_number' in returned)
+        self.assertTrue('id' in returned)
+        self.assertEqual(type(returned['album']), types.UnicodeType)
+        self.assertEqual(type(returned['title']), types.UnicodeType)
+        self.assertEqual(type(returned['mp3_stream_url']), types.UnicodeType)
+        self.assertEqual(type(returned['ogg_stream_url']), types.UnicodeType)
+
+    def test_get_details_album_details(self):
+        """Test getting the TrackResource details with album details"""
+
+        track = Track.objects.all()[0]
+
+        self.client.login(username=self.user.username,
+                          password='test')
+
+        request_args = {'resource_name': 'track',
+                        'api_name': 'v1',
+                        'pk': track.pk}
+
+        response = self.client.get(reverse(
+                'api_dispatch_detail',
+                kwargs=request_args), data={'details': 'album'})
+
+        self.assertEqual(response.status_code, 200)
+        self.assertTrue(response['Content-Type'].startswith('application/json'))
+
+        returned = json.loads(response.content)
+        self.assertTrue('mp3_stream_url' in returned)
+        self.assertTrue('ogg_stream_url' in returned)
+        self.assertTrue('album' in returned)
+        self.assertTrue('title' in returned)
+        self.assertTrue('track_number' in returned)
+        self.assertTrue('id' in returned)
+        self.assertEqual(type(returned['album']), types.DictType)
+        self.assertEqual(type(returned['title']), types.UnicodeType)
+        self.assertEqual(type(returned['mp3_stream_url']), types.UnicodeType)
+        self.assertEqual(type(returned['ogg_stream_url']), types.UnicodeType)
