@@ -13,6 +13,7 @@
     <tr>
      <td id="{{this.id}}" class="track_item" mp3="{{this.mp3_stream_url}}" ogg="{{this.ogg_stream_url}}">
         <span>{{this.title}}</span>
+        <div class="dropdown pull-right"><i role="button" class="icon-cog dropdown-toggle" data-toggle="dropdown"></i>{{> trackDropdown}}</div>
       </td>
     </tr>
     {{/each}}
