@@ -77,18 +77,23 @@ $(document).ready(function() {
     var ARTISTTRACKS = 'artist-tracks.js';
     var ALBUMLIST = 'album-list.js';
     var TRACKLIST = 'tracks.js';
+    var TRACKDROPDOWN = 'track-dropdown.js'; // The drop down menu which displays for each track on any screen with tracks
 
-    function getTemplateAjax(file) {
+    function getTemplateAjax(file, partial) {
         var template;
+        partial = typeof partial !== 'undefined' ? partial : false;
 
         return $.ajax({
                 url: "{{ STATIC_URL }}djukebox/js/templates/" + file, //ex. js/templates/mytemplate.handlebars
                 cache: true,
                 dataType: "text",
                 success: function(data) {
-                    artistlist_template = Handlebars.compile(data);
-                    template = Handlebars.compile(data);
-                    compiled_templates[file] = template;
+                    if(!partial) {
+                        template = Handlebars.compile(data);
+                        compiled_templates[file] = template;
+                    } else {
+                        Handlebars.registerPartial("trackDropdown", data);
+                    }
                 },
          });
     }
@@ -152,6 +157,24 @@ $(document).ready(function() {
         $('.track_item').dblclick(function(obj) {
             rebuildAudioPlayer($(this).attr("ogg"), $(this).attr("mp3"));
         });
+
+    }
+
+    function bindDropdownMenuItems() {
+        $('.playbutton').click(function(obj) {
+            var parent = $(this).parents('.track_item');
+            rebuildAudioPlayer(parent.attr("ogg"), parent.attr("mp3"));
+        });
+
+        $('.deletebutton').click(function() {
+            return $.ajax({
+                url: $(this).attr("url"),
+                type: "DELETE",
+                success: function() {
+                   //remove from the html
+                }
+           });
+        });
     }
 
     function bindUpload() {
@@ -194,7 +217,12 @@ $(document).ready(function() {
         switch(fragments[0]) {
           case 'album':
              $.when(albumAjax(fragments[1])).then(function(data) {
-                 switchView(ALBUM, data, bindPlayer);
+                 switchView(ALBUM, data,
+                     function() {
+                         bindPlayer();
+                         bindDropdownMenuItems();
+                     }
+                  );
              });
              break;
 
@@ -206,7 +234,13 @@ $(document).ready(function() {
 
           case 'artist':
             $.when(artistAjax(fragments[1]), albumsByArtistAjax(fragments[1])).then(function(artist, albums){
-              switchView(ARTISTALBUMS, {"artist": artist[0], "albums": albums[0].albums}, bindPlayer);
+              switchView(ARTISTALBUMS, {"artist": artist[0],
+                                        "albums": albums[0].albums},
+                                        function() {
+                                            bindPlayer();
+                                            bindDropdownMenuItems();
+                                        }
+                         );
             });
             break;
 
@@ -232,7 +266,11 @@ $(document).ready(function() {
                 cache: true,
                 dataType: "json",
                 success: function(data) {
-                    switchView(TRACKLIST, data, bindPlayer);
+                    switchView(TRACKLIST, data,
+                        function() {
+                            bindPlayer();
+                            bindDropdownMenuItems();
+                        });
                 }
              });
             break;
@@ -286,7 +324,7 @@ $(document).ready(function() {
     //and call
     $(window).bind('hashchange', getViewData);
     $.when(getTemplateAjax(ARTISTLIST), getTemplateAjax(ARTISTALBUMS), getTemplateAjax(ALBUMLIST),
-           getTemplateAjax(ALBUM), getTemplateAjax(TRACKLIST)).then(function() {
+           getTemplateAjax(ALBUM), getTemplateAjax(TRACKLIST), getTemplateAjax(TRACKDROPDOWN, true)).then(function() {
         getViewData();
     });
 
