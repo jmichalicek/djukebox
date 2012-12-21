@@ -79,7 +79,7 @@ $(document).ready(function() {
     var TRACKLIST = 'tracks.js';
     var TRACKDROPDOWN = 'track-dropdown.js'; // The drop down menu which displays for each track on any screen with tracks
 
-    function getTemplateAjax(file, partial) {
+    function getTemplateAjax(file, partial, partialName) {
         var template;
         partial = typeof partial !== 'undefined' ? partial : false;
 
@@ -92,7 +92,7 @@ $(document).ready(function() {
                         template = Handlebars.compile(data);
                         compiled_templates[file] = template;
                     } else {
-                        Handlebars.registerPartial("trackDropdown", data);
+                        Handlebars.registerPartial(partialName, data);
                     }
                 },
          });
@@ -167,11 +167,19 @@ $(document).ready(function() {
         });
 
         $('.deletebutton').click(function() {
+            // So far this seems to work ok even when the track is playing
+            // but it might be good to confirm if someone wants to delete a playing track... or any track.
+            var sender = $(this);
             return $.ajax({
                 url: $(this).attr("url"),
                 type: "DELETE",
-                success: function() {
-                   //remove from the html
+                success: function(data) {
+                   // remove from the html
+                   // Delete buttons themselves or a parent should have
+                   // a 'data-delete' attribute, which is the element which will be removed
+                   // along with child elements
+                   var deleteme = sender.closest('[data-delete]');
+                   deleteme.remove();
                 }
            });
         });
@@ -324,7 +332,8 @@ $(document).ready(function() {
     //and call
     $(window).bind('hashchange', getViewData);
     $.when(getTemplateAjax(ARTISTLIST), getTemplateAjax(ARTISTALBUMS), getTemplateAjax(ALBUMLIST),
-           getTemplateAjax(ALBUM), getTemplateAjax(TRACKLIST), getTemplateAjax(TRACKDROPDOWN, true)).then(function() {
+           getTemplateAjax(ALBUM), getTemplateAjax(TRACKLIST),
+           getTemplateAjax(TRACKDROPDOWN, true,"trackDropdown")).then(function() {
         getViewData();
     });
 

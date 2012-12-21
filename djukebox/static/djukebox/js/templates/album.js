@@ -6,7 +6,7 @@
 </div>
 <div class="span10">
   {{#each tracks }}
-  <div id="{{this.id}}" class="thumbnail track_item" mp3="{{this.mp3_stream_url}}" ogg="{{this.ogg_stream_url}}">
+  <div id="{{this.id}}" class="thumbnail track_item" mp3="{{this.mp3_stream_url}}" ogg="{{this.ogg_stream_url}}" data-delete>
     {{this.title}}
     <div class="dropdown pull-right"><i role="button" class="icon-cog dropdown-toggle" data-toggle="dropdown"></i>{{> trackDropdown}}</div>
   </div>

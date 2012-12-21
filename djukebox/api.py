@@ -194,7 +194,7 @@ class TrackResource(ModelResource):
         resource_name = 'track'
         collection_name = 'tracks'
         list_allowed_methods = ['get']
-        detail_allowed_methods = ['get']
+        detail_allowed_methods = ['get', 'delete']
         authentication = SessionAuthentication()
         authorization = Authorization()
         filtering = {
