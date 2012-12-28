@@ -660,3 +660,38 @@ class TrackResourceTests(ApiTests):
         self.assertEqual(type(returned['title']), types.UnicodeType)
         self.assertEqual(type(returned['mp3_stream_url']), types.UnicodeType)
         self.assertEqual(type(returned['ogg_stream_url']), types.UnicodeType)
+
+    def test_delete_details(self):
+        """Test deleting a track"""
+        track = Track.objects.all()[0]
+
+        self.client.login(username=self.user.username,
+                          password='test')
+
+        request_args = {'resource_name': 'track',
+                        'api_name': 'v1',
+                        'pk': track.pk}
+
+        response = self.client.delete(reverse(
+                'api_dispatch_detail',
+                kwargs=request_args))
+
+        self.assertEqual(response.status_code, 204)
+        self.assertTrue(response['Content-Type'].startswith('text/html'))
+
+    def test_delete_details_not_logged_in(self):
+        """Test deleting a track"""
+        track = Track.objects.all()[0]
+
+        self.client.logout()
+
+        request_args = {'resource_name': 'track',
+                        'api_name': 'v1',
+                        'pk': track.pk}
+
+        response = self.client.delete(reverse(
+                'api_dispatch_detail',
+                kwargs=request_args))
+
+        self.assertEqual(response.status_code, 401)
+        self.assertTrue(response['Content-Type'].startswith('text/html'))
