@@ -76,6 +76,7 @@
 <script type="text/javascript" src="{{STATIC_URL}}djukebox/js/jquery-csrf.js"></script>
 <script type="text/javascript" src="{{ STATIC_URL }}djukebox/js/jquery.ui.widget.js"></script>
 <script src="{{ STATIC_URL }}djukebox/js/jquery.fileupload.js"></script>
+<!-- <script defer src="http://balupton.github.com/history.js/scripts/bundled/html5/jquery.history.js"></script> -->
 
 <script type="text/javascript">
 $(document).ready(function() {
@@ -168,20 +169,13 @@ $(document).ready(function() {
         });
     }
 
-    function bindPlayer() {
-        $('.track_item').dblclick(function(obj) {
-            rebuildAudioPlayer($(this).attr("ogg"), $(this).attr("mp3"));
-        });
-
-    }
-
     function bindDropdownMenuItems() {
-        $('.playbutton').click(function(obj) {
+        $('#main').on('click', '.playbutton', function(obj) {
             var parent = $(this).parents('.track_item');
             rebuildAudioPlayer(parent.attr("ogg"), parent.attr("mp3"));
         });
 
-        $('.deletebutton').click(function() {
+        $('#main').on('click', '.deletebutton', function() {
             // So far this seems to work ok even when the track is playing
 
             // this var gets used to make a closure two levels deep
@@ -262,6 +256,7 @@ $(document).ready(function() {
         });
     }
 
+
     function getViewData() {
         var fragments = window.location.hash.replace('#', '').split("/");
 
@@ -270,12 +265,7 @@ $(document).ready(function() {
         switch(fragments[0]) {
           case 'album':
              $.when(albumAjax(fragments[1])).then(function(data) {
-                 switchView(ALBUM, data,
-                     function() {
-                         bindPlayer();
-                         bindDropdownMenuItems();
-                     }
-                  );
+                 switchView(ALBUM, data);
              });
              break;
 
@@ -288,12 +278,7 @@ $(document).ready(function() {
           case 'artist':
             $.when(artistAjax(fragments[1]), albumsByArtistAjax(fragments[1])).then(function(artist, albums){
               switchView(ARTISTALBUMS, {"artist": artist[0],
-                                        "albums": albums[0].albums},
-                                        function() {
-                                            bindPlayer();
-                                            bindDropdownMenuItems();
-                                        }
-                         );
+                                        "albums": albums[0].albums});
             });
             break;
 
@@ -319,12 +304,7 @@ $(document).ready(function() {
                 cache: true,
                 dataType: "json",
                 success: function(data) {
-                    switchView(TRACKLIST, data,
-                        function() {
-                            bindPlayer();
-                            bindDropdownMenuItems();
-                        });
-                }
+                    switchView(TRACKLIST, data}
              });
             break;
 
@@ -376,6 +356,7 @@ $(document).ready(function() {
     //register hash changed listener
     //and call
     $(window).bind('hashchange', getViewData);
+    
     $.when(getTemplateAjax(ARTISTLIST), getTemplateAjax(ARTISTALBUMS), getTemplateAjax(ALBUMLIST),
            getTemplateAjax(ALBUM), getTemplateAjax(TRACKLIST),
            getTemplateAjax(TRACKDROPDOWN, true,"trackDropdown"),
@@ -383,6 +364,11 @@ $(document).ready(function() {
         getViewData();
     });
 
+    $(document).on('dblclick', '.track_item',  function(obj) {
+        rebuildAudioPlayer($(this).attr("ogg"), $(this).attr("mp3"));
+    });
+
+    bindDropdownMenuItems();
 
 
     // no alerts at the moment but leaving this here because they will get added back
