@@ -76,6 +76,7 @@
 <script type="text/javascript" src="{{STATIC_URL}}djukebox/js/jquery-csrf.js"></script>
 <script type="text/javascript" src="{{ STATIC_URL }}djukebox/js/jquery.ui.widget.js"></script>
 <script src="{{ STATIC_URL }}djukebox/js/jquery.fileupload.js"></script>
+<script type="text/javascript" src="{{ STATIC_URL }}djukebox/js/routing.js"></script>
 <!-- <script defer src="http://balupton.github.com/history.js/scripts/bundled/html5/jquery.history.js"></script> -->
 
 <script type="text/javascript">
@@ -125,48 +126,6 @@ $(document).ready(function() {
                 switchView(template, context);
             });
         }
-    }
-
-    function artistAjax(artist_id) {
-        return $.ajax({
-                {% comment %}
-                A bit of a kludge here.  Really we want api_dispatch_detail url
-                but to get that we have to know the resource pk when the template is rendered,
-                which we don't.  Fortunately the url is just the api_dispatch_list plus the pk.
-                It could also be retrieved from the API with extra ajax calls, but I want to avoid
-                that until it's necessary.
-                {% endcomment %}
-                url: "{% url api_dispatch_list resource_name='artist' api_name='v1' %}" + artist_id + "/",
-                cache: true,
-                dataType: "json",
-                });
-    }
-
-    function albumsByArtistAjax(artist_id) {
-        return $.ajax({
-          url: "{% url api_dispatch_list resource_name='album' api_name='v1' %}",
-          data: {"artist": artist_id, "details": "tracks"},
-          cache: true,
-          dataType: "json"
-        });
-    }
-
-    function albumAjax(album_id) {
-        return $.ajax({
-            url: "{% url api_dispatch_list resource_name='album' api_name='v1' %}" + album_id + "/",
-            data: {"details": "artist,tracks"},
-            cache: true,
-            dataType: "json"
-        });
-    }
-
-    function albumsAjax() {
-        return $.ajax({
-            url: "{% url api_dispatch_list resource_name='album' api_name='v1' %}",
-            data: {"details": "artist"},
-            cache: true,
-            dataType: "json"
-        });
     }
 
     function bindDropdownMenuItems() {
@@ -256,69 +215,6 @@ $(document).ready(function() {
         });
     }
 
-
-    function getViewData() {
-        var fragments = window.location.hash.replace('#', '').split("/");
-
-        // makes ajax call to get correct view data based on the url fragment
-        // and then calls switchView() to switch to the correct view
-        switch(fragments[0]) {
-          case 'album':
-             $.when(albumAjax(fragments[1])).then(function(data) {
-                 switchView(ALBUM, data);
-             });
-             break;
-
-          case 'albums':
-            $.when(albumsAjax()).then(function(data){
-                switchView(ALBUMLIST, data);
-            });
-            break;
-
-          case 'artist':
-            $.when(artistAjax(fragments[1]), albumsByArtistAjax(fragments[1])).then(function(artist, albums){
-              switchView(ARTISTALBUMS, {"artist": artist[0],
-                                        "albums": albums[0].albums});
-            });
-            break;
-
-          case 'artists':
-            $.ajax({
-                {% comment %}
-                would think we could namespace this in case there are other tastypie api's in use.
-                may have to settle for using a more descriptive name
-                {% endcomment %}
-                url: "{% url api_dispatch_list resource_name='artist' api_name='v1' %}",
-                cache: true,
-                dataType: "json",
-                success: function(data) {
-                    switchView(ARTISTLIST, data);
-                }
-             });
-            break;
-
-          case 'tracks':
-            $.ajax({
-                url: "{% url api_dispatch_list resource_name='track' api_name='v1' %}",
-                data: {"details": "album,artist"},
-                cache: true,
-                dataType: "json",
-                success: function(data) {
-                    switchView(TRACKLIST, data}
-             });
-            break;
-
-          default:
-            $.ajax({
-                url: "{% url api_dispatch_list resource_name='artist' api_name='v1' %}",
-                cache: true,
-                dataType: "json",
-                success: function(data) {
-                    switchView(ARTISTLIST, data);
-                },});
-        }
-    }
-
     function rebuildAudioPlayer(ogg_url, mp3_url) {
         //rebuild the player since just changing src properties is flakey in default players
         $("#audio_player").remove();
@@ -350,18 +246,114 @@ $(document).ready(function() {
     }
 
 
+
+    function artistsView(context) {
+         $.ajax({
+                url: context.ajaxUrl,
+                cache: true,
+                dataType: "json",
+                success: function(data) {
+                    switchView(ARTISTLIST, data);
+                },});
+    }
+
+    function allTracksView(context) {
+	 $.ajax({
+                url: context.ajaxUrl,
+                data: context.details,
+                cache: true,
+                dataType: "json",
+                success: function(data) {
+                    switchView(TRACKLIST, data)
+                }
+             });
+    }
+
+    function artistView(context) {
+
+        var fragments = window.location.hash.replace('#', '').split("/");
+        var artist_id = fragments[1];
+
+        function albumsByArtistAjax() {
+            return $.ajax({
+              url: context.albumUrl,
+              data: {"artist": artist_id, "details": "tracks"},
+              cache: true,
+              dataType: "json"
+            });
+        }
+
+         function artistAjax() {
+             return $.ajax({
+                /*
+                A bit of a kludge here.  Really we want api_dispatch_detail url
+                but to get that we have to know the resource pk when the template is rendered,
+                which we don't.  Fortunately the url is just the api_dispatch_list plus the pk.
+                It could also be retrieved from the API with extra ajax calls, but I want to avoid
+                that until it's necessary.
+                */
+                url: context.artistUrl + artist_id + "/",
+                cache: true,
+                dataType: "json",
+            });
+         }
+     
+        $.when(artistAjax(fragments[1]), albumsByArtistAjax(fragments[1])).then(function(artist, albums){
+              switchView(ARTISTALBUMS, {"artist": artist[0],
+                                        "albums": albums[0].albums});
+            });	
+    }
+
+    function albumsView(context) {
+          $.ajax({
+            url: context.ajaxUrl,
+            data: {"details": "artist"},
+            cache: true,
+            dataType: "json",
+            success: function (data) {
+                switchView(ALBUMLIST, data);
+            }
+        });
+    }
+
+    function albumView(context) {
+        var fragments = window.location.hash.replace('#', '').split("/");
+        var album_id = fragments[1];
+        $.ajax({
+           url: "{% url api_dispatch_list resource_name='album' api_name='v1' %}" + album_id + "/",
+           data: {"details": "artist,tracks"},
+           cache: true,
+           dataType: "json",
+           success: function (data) {
+               switchView(ALBUM, data);
+           }
+       });
+    }
+
     bindUpload();
+
+    Router.routes = [
+	[/^tracks\/?$/, allTracksView, {ajaxUrl: "{% url api_dispatch_list resource_name='track' api_name='v1' %}"}],
+	[/^albums\/?$/, albumsView, {ajaxUrl:  "{% url api_dispatch_list resource_name='album' api_name='v1' %}"}],
+        [/^album\/\d+\/?$/, albumView, {ajaxUrl:  "{% url api_dispatch_list resource_name='album' api_name='v1' %}"}],
+	[/^artists\/?$/, artistsView, {ajaxUrl:  "{% url api_dispatch_list resource_name='artist' api_name='v1' %}"}],
+	[/^artist\/\d+\/?/, artistView, {artistUrl: "{% url api_dispatch_list resource_name='artist' api_name='v1' %}",
+                                     albumUrl: "{% url api_dispatch_list resource_name='album' api_name='v1' %}"}],
+	[/.*/, artistsView, {ajaxUrl:  "{% url api_dispatch_list resource_name='artist' api_name='v1' %}"}]
+	];
 
     //preload and compile templates on page load
     //register hash changed listener
     //and call
-    $(window).bind('hashchange', getViewData);
+    //$(window).bind('hashchange', getViewData);
+    $(window).bind('hashchange', $.proxy(Router.routeToView, Router));
     
     $.when(getTemplateAjax(ARTISTLIST), getTemplateAjax(ARTISTALBUMS), getTemplateAjax(ALBUMLIST),
            getTemplateAjax(ALBUM), getTemplateAjax(TRACKLIST),
            getTemplateAjax(TRACKDROPDOWN, true,"trackDropdown"),
            getTemplateAjax(BOOTSTRAPALERT)).then(function() {
-        getViewData();
+        //getViewData();
+	Router.routeToView();
     });
 
     $(document).on('dblclick', '.track_item',  function(obj) {
