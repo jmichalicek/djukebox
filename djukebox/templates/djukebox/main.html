@@ -320,7 +320,7 @@ $(document).ready(function() {
         var fragments = window.location.hash.replace('#', '').split("/");
         var album_id = fragments[1];
         $.ajax({
-           url: "{% url api_dispatch_list resource_name='album' api_name='v1' %}" + album_id + "/",
+           url: ajaxUrl + album_id + "/",
            data: {"details": "artist,tracks"},
            cache: true,
            dataType: "json",
