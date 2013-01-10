@@ -128,7 +128,7 @@ $(document).ready(function() {
     function bindDropdownMenuItems() {
         $('#main').on('click', '.playbutton', function(obj) {
             var parent = $(this).parents('.track_item');
-            rebuildAudioPlayer(parent.attr("ogg"), parent.attr("mp3"));
+            rebuildAudioPlayer(parent.attr("data-ogg"), parent.attr("data-mp3"));
         });
 
         $('#main').on('click', '.deletebutton', function() {
@@ -352,7 +352,7 @@ $(document).ready(function() {
     });
 
     $(document).on('dblclick', '.track_item',  function(obj) {
-        rebuildAudioPlayer($(this).attr("ogg"), $(this).attr("mp3"));
+        rebuildAudioPlayer($(this).attr("data-ogg"), $(this).attr("data-mp3"));
     });
 
     bindDropdownMenuItems();
