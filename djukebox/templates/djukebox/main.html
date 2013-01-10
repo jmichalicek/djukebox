@@ -83,8 +83,6 @@ $(document).ready(function() {
 
     //obj to store pre-compiled templates
     var compiledTemplates = new Object();
-    {# this template is inlined as documented above #}
-    compiledTemplates.FILE_UPLOAD = Handlebars.compile($('#upload-template').html());
 
     var ARTISTLIST = 'artist-list.js';
     var ARTISTALBUMS = 'artist-albums.js';
@@ -243,7 +241,6 @@ $(document).ready(function() {
         }
         player.appendTo($("#audio_player_div"));
     }
-
 
 
     function artistsView(context) {
