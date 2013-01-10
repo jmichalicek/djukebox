@@ -77,7 +77,6 @@
 <script type="text/javascript" src="{{ STATIC_URL }}djukebox/js/jquery.ui.widget.js"></script>
 <script src="{{ STATIC_URL }}djukebox/js/jquery.fileupload.js"></script>
 <script type="text/javascript" src="{{ STATIC_URL }}djukebox/js/routing.js"></script>
-<!-- <script defer src="http://balupton.github.com/history.js/scripts/bundled/html5/jquery.history.js"></script> -->
 
 <script type="text/javascript">
 $(document).ready(function() {
@@ -320,7 +319,7 @@ $(document).ready(function() {
         var fragments = window.location.hash.replace('#', '').split("/");
         var album_id = fragments[1];
         $.ajax({
-           url: ajaxUrl + album_id + "/",
+           url: context.ajaxUrl + album_id + "/",
            data: {"details": "artist,tracks"},
            cache: true,
            dataType: "json",
@@ -332,28 +331,27 @@ $(document).ready(function() {
 
     bindUpload();
 
-    Router.routes = [
-	[/^tracks\/?$/, allTracksView, {ajaxUrl: "{% url api_dispatch_list resource_name='track' api_name='v1' %}"}],
-	[/^albums\/?$/, albumsView, {ajaxUrl:  "{% url api_dispatch_list resource_name='album' api_name='v1' %}"}],
+    router.routes = [
+        [/^tracks\/?$/, allTracksView, {ajaxUrl: "{% url api_dispatch_list resource_name='track' api_name='v1' %}"}],
+        [/^albums\/?$/, albumsView, {ajaxUrl:  "{% url api_dispatch_list resource_name='album' api_name='v1' %}"}],
         [/^album\/\d+\/?$/, albumView, {ajaxUrl:  "{% url api_dispatch_list resource_name='album' api_name='v1' %}"}],
-	[/^artists\/?$/, artistsView, {ajaxUrl:  "{% url api_dispatch_list resource_name='artist' api_name='v1' %}"}],
-	[/^artist\/\d+\/?/, artistView, {artistUrl: "{% url api_dispatch_list resource_name='artist' api_name='v1' %}",
-                                     albumUrl: "{% url api_dispatch_list resource_name='album' api_name='v1' %}"}],
-	[/.*/, artistsView, {ajaxUrl:  "{% url api_dispatch_list resource_name='artist' api_name='v1' %}"}]
-	];
+        [/^artists\/?$/, artistsView, {ajaxUrl:  "{% url api_dispatch_list resource_name='artist' api_name='v1' %}"}],
+        [/^artist\/\d+\/?/, artistView, {artistUrl: "{% url api_dispatch_list resource_name='artist' api_name='v1' %}",
+                                         albumUrl: "{% url api_dispatch_list resource_name='album' api_name='v1' %}"}],
+        [/.*/, artistsView, {ajaxUrl:  "{% url api_dispatch_list resource_name='artist' api_name='v1' %}"}]
+    ];
 
     //preload and compile templates on page load
     //register hash changed listener
     //and call
-    //$(window).bind('hashchange', getViewData);
-    $(window).bind('hashchange', $.proxy(Router.routeToView, Router));
+    $(window).bind('hashchange', $.proxy(router.routeToView, router));
     
     $.when(getTemplateAjax(ARTISTLIST), getTemplateAjax(ARTISTALBUMS), getTemplateAjax(ALBUMLIST),
            getTemplateAjax(ALBUM), getTemplateAjax(TRACKLIST),
            getTemplateAjax(TRACKDROPDOWN, true,"trackDropdown"),
            getTemplateAjax(BOOTSTRAPALERT)).then(function() {
         //getViewData();
-	Router.routeToView();
+	router.routeToView();
     });
 
     $(document).on('dblclick', '.track_item',  function(obj) {

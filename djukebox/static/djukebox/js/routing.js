@@ -6,8 +6,16 @@
 // Router.routes should be a list of lists of
 // [regularExpression, functionCallable, {additional data}]
 
-var Router = {'routes': []};
-Router.routeToView = function () {
+var router = Object.create(Object.prototype);
+
+Object.defineProperty(router, 'routes', {
+    value: [],
+    writable: true,
+    enumerable: true,
+    configurable: false
+});
+
+router.routeToView = function () {
     // Just route on hash fragment for now
     var hashpath = window.location.hash.replace('#', '');
 
