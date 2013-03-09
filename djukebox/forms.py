@@ -5,7 +5,8 @@ Forms for Djukebox
 from django import forms
 from django.template.defaultfilters import filesizeformat
 
-from app_settings import UPLOAD_FILE_MAX_SIZE, UPLOAD_FILE_TYPES
+from djukebox.app_settings import UPLOAD_FILE_MAX_SIZE, UPLOAD_FILE_TYPES
+from djukebox.models import Track
 
 
 class TrackUploadForm(forms.Form):
@@ -35,3 +36,8 @@ class TrackUploadForm(forms.Form):
             else:
                 raise forms.ValidationError('File type is not supported: %s' %file_type)
         return data
+
+class TrackEditForm(forms.ModelForm):
+
+    class Meta:
+        model = Track

@@ -70,6 +70,18 @@
       <a id="confirm_delete_button" href="#" class="btn btn-danger" data-dismiss="modal">Delete</a>
     </div>
   </div>
+
+  <div id="edit_track_modal" class="modal hide fade">
+    <div class="modal-header">
+      <button type="button" class="close" data-dismiss="modal" aria-hidden="true">&times;</button>
+      <h3>Edit Track</h3>
+    </div>
+    <div class="modal-body">
+      {{ track_edit_form }}
+    </div>
+    <div class="modal-footer">
+    </div>
+  </div>
 </div>
 
 <script type="text/javascript" src="{{STATIC_URL}}djukebox/js/handlebars.js"></script>
@@ -178,6 +190,11 @@ $(document).ready(function() {
            // to remove
            $('#confirm_delete_modal').modal();
         });
+
+        $('#main').on('click', '.editbutton', function() {
+            $('#edit_track_modal').modal();
+        });
+
     }
 
     function bindUpload() {

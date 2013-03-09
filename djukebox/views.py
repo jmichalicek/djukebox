@@ -11,10 +11,10 @@ from django.template import RequestContext
 from django.views.decorators.cache import cache_control
 from django.http import HttpResponseRedirect, HttpResponse
 
-from models import Album, Track, OggFile, Mp3File
-from forms import TrackUploadForm
-from tasks import convert_file_to_ogg, convert_file_to_mp3
-import app_settings
+from djukebox.models import Album, Track, OggFile, Mp3File
+from djukebox.forms import TrackEditForm, TrackUploadForm
+from djukebox.tasks import convert_file_to_ogg, convert_file_to_mp3
+import djukebox.app_settings
 
 import os
 import mimetypes
@@ -43,9 +43,16 @@ def stream_track(request, track_id, file_format):
 def main(request):
     """The primary Djukebox view which renders the UI"""
 
+    # This will get populated with track data in javascript in the html
+    # That initially sounds like we might as well do the whole form there
+    # but this makes it easier to keep aligned with what the REST API will
+    # be using to validate track updates.
+    track_edit_form = TrackEditForm()
+
     return render_to_response(
         'djukebox/main.html',
-        {'content_view': reverse('djukebox-home')},
+        {'content_view': reverse('djukebox-home'),
+         'track_edit_form': track_edit_form},
         context_instance=RequestContext(request)
     )
 
