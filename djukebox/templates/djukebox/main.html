@@ -92,10 +92,10 @@
 
 <script type="text/javascript">
 $(document).ready(function() {
-
+    
     //obj to store pre-compiled templates
     var compiledTemplates = new Object();
-
+    
     var ARTISTLIST = 'artist-list.js';
     var ARTISTALBUMS = 'artist-albums.js';
     var ALBUM = 'album.js';
@@ -104,26 +104,26 @@ $(document).ready(function() {
     var TRACKLIST = 'tracks.js';
     var TRACKDROPDOWN = 'track-dropdown.js'; // The drop down menu which displays for each track on any screen with tracks
     var BOOTSTRAPALERT = 'bootstrap-alert.js';
-
+    
     function getTemplateAjax(file, partial, partialName) {
         var template;
         partial = typeof partial !== 'undefined' ? partial : false;
-
+        
         return $.ajax({
-                url: "{{ STATIC_URL }}djukebox/js/templates/" + file, //ex. js/templates/mytemplate.handlebars
-                cache: true,
-                dataType: "text",
-                success: function(data) {
-                    if(!partial) {
-                        template = Handlebars.compile(data);
-                        compiledTemplates[file] = template;
-                    } else {
-                        Handlebars.registerPartial(partialName, data);
-                    }
-                },
-         });
+            url: "{{ STATIC_URL }}djukebox/js/templates/" + file, //ex. js/templates/mytemplate.handlebars
+            cache: true,
+            dataType: "text",
+            success: function(data) {
+                if(!partial) {
+                    template = Handlebars.compile(data);
+                    compiledTemplates[file] = template;
+                } else {
+                    Handlebars.registerPartial(partialName, data);
+                }
+            },
+        });
     }
-
+    
     function switchView(template, context, callback){
         if(template in compiledTemplates) {
             $('#content').html(compiledTemplates[template](context));
@@ -136,16 +136,16 @@ $(document).ready(function() {
             });
         }
     }
-
+    
     function bindDropdownMenuItems() {
         $('#main').on('click', '.playbutton', function(obj) {
             var parent = $(this).parents('.track_item');
             rebuildAudioPlayer(parent.attr("data-ogg"), parent.attr("data-mp3"));
         });
-
+        
         $('#main').on('click', '.deletebutton', function() {
             // So far this seems to work ok even when the track is playing
-
+            
             // this var gets used to make a closure two levels deep
             // since it needs to know which element actually triggered the delete
             var sender = $(this);
@@ -154,22 +154,22 @@ $(document).ready(function() {
                     url: sender.attr("url"),
                     type: "DELETE",
                     success: function(data) {
-                       // remove from the html
-                       // Delete buttons themselves or a parent should have
-                       // a 'data-delete' attribute, which is the element which will be removed
-                       // along with child elements
-                       var deleteme = sender.closest('[data-delete]');
-                       deleteme.remove();
+                        // remove from the html
+                        // Delete buttons themselves or a parent should have
+                        // a 'data-delete' attribute, which is the element which will be removed
+                        // along with child elements
+                        var deleteme = sender.closest('[data-delete]');
+                        deleteme.remove();
                     },
                     error: function(data) {
                         // Include track name in the error message?
                         // replace this with noty?  It would be easier to make it look nice
                         var context = {'alert': {
-                                          'class': 'alert-error',
-                                          'header': '',
-                                          'message': 'Error deleting track'
-                                          }
-                                       };
+                            'class': 'alert-error',
+                            'header': '',
+                            'message': 'Error deleting track'
+                        }
+                                      };
                         var alert = $(compiledTemplates[BOOTSTRAPALERT](context));
                         $('#main').append(alert);
                         alert.bind('closed', function() {
@@ -182,36 +182,36 @@ $(document).ready(function() {
                         // been clicked since page load.
                         $('#confirm_delete_button').unbind('click');
                     }
-               }); // close $.ajax()
+                }); // close $.ajax()
             }); // close .click()
-
-           // pop up the modal now that the delete function is bound
-           // to the confirm delete button with correct url and element
-           // to remove
-           $('#confirm_delete_modal').modal();
+            
+            // pop up the modal now that the delete function is bound
+            // to the confirm delete button with correct url and element
+            // to remove
+            $('#confirm_delete_modal').modal();
         });
-
+        
         $('#main').on('click', '.editbutton', function() {
             $('#edit_track_modal').modal();
         });
-
+        
     }
-
+    
     function bindUpload() {
         $('#id_file').hide();
         $('#upload_link').click(function() {
             $('#id_file').click();
         });
-
+        
         $('#id_file').fileupload({
             dataType: 'json',
             done: function (e, data) {
-                 $('#pbar').css(
+                $('#pbar').css(
                     'width',
                     '0%'
                 );
                 $('#progressmodal').modal('hide');
-
+                
                 $.each(data.result, function (index, file) {
                     //$('<p/>').text(file.name).appendTo(document.body);
                 });
@@ -224,21 +224,21 @@ $(document).ready(function() {
                 );
             },
             start: function(e, data) {
-              $('#progressmodal').modal('show');
+                $('#progressmodal').modal('show');
             },
         });
     }
-
+    
     function rebuildAudioPlayer(ogg_url, mp3_url) {
         //rebuild the player since just changing src properties is flakey in default players
         $("#audio_player").remove();
-
+        
         var player = $("<audio>", {
             id: "audio_player",
             controls: "controls",
             preload: "auto"
         });
-
+        
         if(ogg_url) {
             var ogg = $("<source>", {
                 id: "ogg_source",
@@ -247,7 +247,7 @@ $(document).ready(function() {
             });
             ogg.appendTo(player);
         }
-
+        
         if(mp3_url) {
             var mp3 = $("<source>", {
                 id: "mp3_source",
@@ -258,67 +258,67 @@ $(document).ready(function() {
         }
         player.appendTo($("#audio_player_div"));
     }
-
-
+    
+    
     function artistsView(context) {
-         $.ajax({
-                url: context.ajaxUrl,
-                cache: true,
-                dataType: "json",
-                success: function(data) {
-                    switchView(ARTISTLIST, data);
-                },});
+        $.ajax({
+            url: context.ajaxUrl,
+            cache: true,
+            dataType: "json",
+            success: function(data) {
+                switchView(ARTISTLIST, data);
+            },});
     }
-
+    
     function allTracksView(context) {
-	 $.ajax({
-                url: context.ajaxUrl,
-                data: context.details,
-                cache: true,
-                dataType: "json",
-                success: function(data) {
-                    switchView(TRACKLIST, data)
-                }
-             });
+	$.ajax({
+            url: context.ajaxUrl,
+            data: context.details,
+            cache: true,
+            dataType: "json",
+            success: function(data) {
+                switchView(TRACKLIST, data)
+            }
+        });
     }
-
+    
     function artistView(context) {
-
+        
         var fragments = window.location.hash.replace('#', '').split("/");
         var artist_id = fragments[1];
-
+        
         function albumsByArtistAjax() {
             return $.ajax({
-              url: context.albumUrl,
-              data: {"artist": artist_id, "details": "tracks"},
-              cache: true,
-              dataType: "json"
+                url: context.albumUrl,
+                data: {"artist": artist_id, "details": "tracks"},
+                cache: true,
+                dataType: "json"
             });
         }
-
-         function artistAjax() {
-             return $.ajax({
+        
+        function artistAjax() {
+            return $.ajax({
                 /*
-                A bit of a kludge here.  Really we want api_dispatch_detail url
-                but to get that we have to know the resource pk when the template is rendered,
-                which we don't.  Fortunately the url is just the api_dispatch_list plus the pk.
-                It could also be retrieved from the API with extra ajax calls, but I want to avoid
-                that until it's necessary.
+                  A bit of a kludge here.  Really we want api_dispatch_detail url
+                  but to get that we have to know the resource pk when the template is rendered,
+                  which we don't.  Fortunately the url is just the api_dispatch_list plus the pk.
+                  It could also be retrieved from the API with extra ajax calls, but I want to avoid
+                  that until it's necessary.
                 */
                 url: context.artistUrl + artist_id + "/",
                 cache: true,
                 dataType: "json",
             });
-         }
-     
+        }
+        
         $.when(artistAjax(fragments[1]), albumsByArtistAjax(fragments[1])).then(function(artist, albums){
-              switchView(ARTISTALBUMS, {"artist": artist[0],
-                                        "albums": albums[0].albums});
-            });	
+            switchView(ARTISTALBUMS, {"artist": artist[0],
+                                      "albums": albums[0].albums});
+        });	
     }
-
+    
     function albumsView(context) {
-          $.ajax({
+        $.ajax({
             url: context.ajaxUrl,
             data: {"details": "artist"},
             cache: true,
@@ -328,23 +328,23 @@ $(document).ready(function() {
             }
         });
     }
-
+    
     function albumView(context) {
         var fragments = window.location.hash.replace('#', '').split("/");
         var album_id = fragments[1];
         $.ajax({
-           url: context.ajaxUrl + album_id + "/",
-           data: {"details": "artist,tracks"},
-           cache: true,
-           dataType: "json",
-           success: function (data) {
-               switchView(ALBUM, data);
-           }
-       });
+            url: context.ajaxUrl + album_id + "/",
+            data: {"details": "artist,tracks"},
+            cache: true,
+            dataType: "json",
+            success: function (data) {
+                switchView(ALBUM, data);
+                }
+        });
     }
-
+    
     bindUpload();
-
+    
     router.routes = [
         [/^tracks\/?$/, allTracksView, {ajaxUrl: "{% url api_dispatch_list resource_name='track' api_name='v1' %}"}],
         [/^albums\/?$/, albumsView, {ajaxUrl:  "{% url api_dispatch_list resource_name='album' api_name='v1' %}"}],
@@ -354,7 +354,7 @@ $(document).ready(function() {
                                          albumUrl: "{% url api_dispatch_list resource_name='album' api_name='v1' %}"}],
         [/.*/, artistsView, {ajaxUrl:  "{% url api_dispatch_list resource_name='artist' api_name='v1' %}"}]
     ];
-
+    
     //preload and compile templates on page load
     //register hash changed listener
     //and call
@@ -364,16 +364,16 @@ $(document).ready(function() {
            getTemplateAjax(ALBUM), getTemplateAjax(TRACKLIST),
            getTemplateAjax(TRACKDROPDOWN, true,"trackDropdown"),
            getTemplateAjax(BOOTSTRAPALERT)).then(function() {
-	router.routeToView();
-    });
-
+	       router.routeToView();
+           });
+    
     $(document).on('dblclick', '.track_item',  function(obj) {
         rebuildAudioPlayer($(this).attr("data-ogg"), $(this).attr("data-mp3"));
     });
-
+    
     bindDropdownMenuItems();
-
-
+    
+    
     // no alerts at the moment but leaving this here because they will get added back
     //The built in bootstrap close removes the alert div from the dom
     //and then it does not reappear since it's completely gone
