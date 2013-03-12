@@ -148,6 +148,7 @@ class OggFile(AudioFile):
     """An ogg-vorbis audio file"""
 
     DEFAULT_CONTENT_TYPES = ('audio/ogg',)
+
     def get_title(self):
         """Return the title from Vorbis comments."""
         file_path = os.path.join(settings.MEDIA_ROOT, self.file.name)
@@ -187,6 +188,7 @@ class Track(models.Model):
     track_number = models.PositiveIntegerField(null=True, blank=True)
     user = models.ForeignKey(User, db_index=True)
     created = models.DateTimeField(db_index=True, auto_now_add=True, blank=True)
+    artist = models.ForeignKey('Artist', db_index=True, null=True, blank=True)
 
     #TODO: Other attributes - genre, duration, isrc, etc.
 
