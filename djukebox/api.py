@@ -130,7 +130,7 @@ class AlbumResource(UserOwnedModelResource):
     """Tastypie resource representing djukebox.models.Album()"""
 
     tracks = ToManyFieldDetailToggle('djukebox.api.TrackResource', 'track_set')
-    artist = ToOneFieldDetailToggle('djukebox.api.ArtistResource', 'artist')
+    artist = ToOneFieldDetailToggle('djukebox.api.ArtistResource', 'artist', null=True)
 
     class Meta:
         """Meta class for AlbumResource"""
@@ -144,6 +144,7 @@ class AlbumResource(UserOwnedModelResource):
         authorization = Authorization()
         filtering = {
             'artist': ALL_WITH_RELATIONS,
+            'title': ('exact'),
             }
 
     def alter_list_data_to_serialize(self, request, data):

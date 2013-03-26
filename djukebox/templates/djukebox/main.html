@@ -214,17 +214,24 @@ $(document).ready(function() {
         });
 
         $('#main').on('click', '#save_track', function() {
+
+            // Grab all of this data off of the UI now, as soon as save is clicked
+            // to avoid risk of race conditions between ajax calls and the user clicking/typing
+            // something else if the system is being particularly slow.
             var sender = $(this);
             var t_artist = $('#id_track-artist').val();
             var a_artist = $('#id_album-artist').val();
+            var trackTitle = $('#id_track-title').val();
+            var albumTitle = $('#id_album-title').val();
+            var trackUrl = $('#edit_track_modal').attr('data-url');
 
+            // First see if there is already an album and artist matching track and album
+            // artist data.  This is done as a list request, but will only come back with one
+            // result each due to db unique indexes.  It may make sense to update the API
+            // to allow the detail to be requested by something other than pk to make
+            // this more clear.
+            // These should be moved to functions which check a cache first before making the request
             $.when(
-                // First we need to see if the specific track and album artists exist.
-                // This looks like it could come back with multiple options, but due to
-                // the model's uniquene indexes that will not happen.
-
-                // Add localstorage caching of these objects and look them up there before
-                // making the request
                 $.ajax({url: "{% url api_dispatch_list resource_name='artist' api_name='v1' %}",
                         cache: false,
                         type: "GET",
@@ -236,19 +243,27 @@ $(document).ready(function() {
                         type: "GET",
                         dataType: "json",
                         data: {name: a_artist},
+                       }),
+                $.ajax({url: "{% url api_dispatch_list resource_name='album' api_name='v1' %}",
+                        cache: false,
+                        type: "GET",
+                        dataType: "json",
+                        data: {title: albumTitle, artist__name: a_artist}
                        })
-            ).then(function(trackArtistData, albumArtistData) {
+            ).then(function(trackArtistData, albumArtistData, albumData) {
                 // Now that we have the track and album artist the request to update the track
                 // can specify the existing artists OR create new ones as needed.
-                var trackUrl = $('#edit_track_modal').attr('data-url');
                 var trackArtist = '';
                 var albumArtist = '';
-
+                                                  
+                // first set up the album correctly since the track relies on it.
+                // if albumData doesn't have the album, it needs created first.
+                // The album artist can be set in one shot
                 if(trackArtistData[0].artists.length !== 0) {
                     trackArtist = trackArtistData[0].artists[0].resource_uri;
                 } else {
                     // create a new artist
-                    trackArtist = {'name': $('#id_track-artist').val()};
+                    trackArtist = {"name": t_artist};
                 }
 
                 if(albumArtistData[0].artists.length !== 0) {
@@ -256,23 +271,33 @@ $(document).ready(function() {
                 } else {
                     // creating a new artist again.  I sure hope this doesn't
                     // clash with the trackArtist if both are the same thing
-                    albumArtist = {'name': $('#id_album-artist').val()};
+                    albumArtist = {"name": a_artist};
                 }
 
-                var postData = JSON.stringify({"artist": trackArtist,
-                                               "album": {"artist": albumArtist}
-                                              });
-                alert(postData);
+                if(albumData[0].albums.length !== 0) {
+                    album = albumData[0].albums[0].resource_uri;
+                } else {
+                    album = {"title": albumTitle,
+                             "artist": albumArtist};
+                }
+                
+                var trackPostData = JSON.stringify({"title": trackTitle,
+                                                    "artist": trackArtist,
+                                                    "album": album
+                                                   });
+
+                
                 $.ajax({url: trackUrl,
                         cache: false,
                         dataType: "json",
                         type: "PATCH",  // change to "PATCH"
                         contentType: "application/json",
-                        data: postData,
-                       }); 
+                        data: trackPostData,
+                       }).done(function () {
+                           $('#edit_track_modal').toggle()
+                       });
             });
-        });
-        
+        });   
     }
     
     function bindUpload() {
