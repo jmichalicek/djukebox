@@ -12,9 +12,9 @@ from django.views.decorators.cache import cache_control
 from django.http import HttpResponseRedirect, HttpResponse
 
 from djukebox.models import Album, Track, OggFile, Mp3File
-from djukebox.forms import TrackEditForm, TrackUploadForm
+from djukebox.forms import AlbumEditForm, TrackEditForm, TrackUploadForm
 from djukebox.tasks import convert_file_to_ogg, convert_file_to_mp3
-import djukebox.app_settings
+from djukebox import app_settings
 
 import os
 import mimetypes
@@ -47,12 +47,14 @@ def main(request):
     # That initially sounds like we might as well do the whole form there
     # but this makes it easier to keep aligned with what the REST API will
     # be using to validate track updates.
-    track_edit_form = TrackEditForm()
+    track_edit_form = TrackEditForm(prefix='track')
+    album_edit_form = AlbumEditForm(prefix='album')
 
     return render_to_response(
         'djukebox/main.html',
         {'content_view': reverse('djukebox-home'),
-         'track_edit_form': track_edit_form},
+         'track_edit_form': track_edit_form,
+         'album_edit_form': album_edit_form},
         context_instance=RequestContext(request)
     )
 

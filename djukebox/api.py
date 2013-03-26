@@ -108,11 +108,25 @@ class ToOneFieldDetailToggle(InlineToggleMixIn, fields.ToOneField):
     pass
 
 
+class UserOwnedModelResource(ModelResource):
+    """
+    A resource which is tied to a specific user.  Users can only view and
+    update resources which they own and any they create will be owned by them.
+    """
+
+    def apply_authorization_limits(self, request, object_list):
+        return object_list.filter(user=request.user)
+
+    def hydrate(self, bundle):
+        bundle.obj.user = bundle.request.user
+
+        return bundle
+
+
 # to add uri specified ordering later
 # http://django-tastypie.readthedocs.org/en/latest/cookbook.html#per-request-alterations-to-the-queryset
 
-
-class AlbumResource(ModelResource):
+class AlbumResource(UserOwnedModelResource):
     """Tastypie resource representing djukebox.models.Album()"""
 
     tracks = ToManyFieldDetailToggle('djukebox.api.TrackResource', 'track_set')
@@ -132,9 +146,6 @@ class AlbumResource(ModelResource):
             'artist': ALL_WITH_RELATIONS,
             }
 
-    def apply_authorization_limits(self, request, object_list):
-        return object_list.filter(user=request.user)
-
     def alter_list_data_to_serialize(self, request, data):
         data['albums'] = data['objects']
         del data['objects']
@@ -146,7 +157,7 @@ class AlbumResource(ModelResource):
         return data
 
 
-class ArtistResource(ModelResource):
+class ArtistResource(UserOwnedModelResource):
     """Tastypie resource representing djukebox.models.Artist()"""
 
     #albums = ToManyFieldDetailToggle('djukebox.api.AlbumResource', 'album_set')
@@ -158,15 +169,12 @@ class ArtistResource(ModelResource):
         resource_name = 'artist'
         collection_name = 'artists'
         list_allowed_methods = ['get']
-        detail_allowed_methods = ['get']
+        detail_allowed_methods = ['get', 'patch']
         authentication = SessionAuthentication()
         authorization = Authorization()
         filtering = {
             'name': ('exact', 'startswith'),
         }
-
-    def apply_authorization_limits(self, request, object_list):
-        return object_list.filter(user=request.user)
 
     #tastypie 0.9.12 will use Meta.collection_name properly so that
     #this doesn't need to be done to name the collection something
@@ -182,10 +190,11 @@ class ArtistResource(ModelResource):
         return data
 
 
-class TrackResource(ModelResource):
+class TrackResource(UserOwnedModelResource):
     """Tastypie resource representing djukebox.models.Track()"""
 
     album = ToOneFieldDetailToggle('djukebox.api.AlbumResource', 'album')
+    artist = ToOneFieldDetailToggle('djukebox.api.ArtistResource', 'artist', null=True)
 
     class Meta:
         """Meta class for TrackResource"""
@@ -194,17 +203,15 @@ class TrackResource(ModelResource):
         resource_name = 'track'
         collection_name = 'tracks'
         list_allowed_methods = ['get']
-        detail_allowed_methods = ['get', 'delete']
+        detail_allowed_methods = ['get', 'delete', 'patch']
         authentication = SessionAuthentication()
         authorization = Authorization()
         filtering = {
             'name': ('exact', 'startswith'),
             'album': ALL_WITH_RELATIONS,
-            'album__artist': ALL_WITH_RELATIONS
+            'album__artist': ALL_WITH_RELATIONS,
+            'artist': ALL_WITH_RELATIONS
             }
-
-    def apply_authorization_limits(self, request, object_list):
-        return object_list.filter(user=request.user)
 
     def alter_list_data_to_serialize(self, request, data):
         data['tracks'] = data['objects']

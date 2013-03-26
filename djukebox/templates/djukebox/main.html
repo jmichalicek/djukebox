@@ -78,8 +78,10 @@
     </div>
     <div class="modal-body">
       {{ track_edit_form }}
+      {{ album_edit_form }}
     </div>
     <div class="modal-footer">
+      <div id="save_track" class="btn">Save</div>
     </div>
   </div>
 </div>
@@ -151,7 +153,7 @@ $(document).ready(function() {
             var sender = $(this);
             $('#confirm_delete_button').click(function() {
                 $.ajax({
-                    url: sender.attr("url"),
+                    url: sender.attr("data-url"),
                     type: "DELETE",
                     success: function(data) {
                         // remove from the html
@@ -191,8 +193,84 @@ $(document).ready(function() {
             $('#confirm_delete_modal').modal();
         });
         
-        $('#main').on('click', '.editbutton', function() {
-            $('#edit_track_modal').modal();
+        $('#main').on('click', '.editbutton', function () {
+            var trackUrl = $(this).parents('.track_item').attr('data-url');
+
+            // These lookups should check a cache first, eventually
+            $.ajax({url: trackUrl,
+                    cache: false,
+                    type: "GET",
+                    dataType: "json",
+                    data: "details=album,artist"
+                   }
+                  ).done(function (track) {
+                      $('#id_track-title').val(track.title);
+                      $('#id_track-artist').val(track.artist.name);
+                      $('#id_album-title').val(track.album.title);
+                      $('#id_album-artist').val(track.album.artist.name);
+                      $('#edit_track_modal').attr('data-url', trackUrl);
+                      $('#edit_track_modal').modal();
+                  });
+        });
+
+        $('#main').on('click', '#save_track', function() {
+            var sender = $(this);
+            var t_artist = $('#id_track-artist').val();
+            var a_artist = $('#id_album-artist').val();
+
+            $.when(
+                // First we need to see if the specific track and album artists exist.
+                // This looks like it could come back with multiple options, but due to
+                // the model's uniquene indexes that will not happen.
+
+                // Add localstorage caching of these objects and look them up there before
+                // making the request
+                $.ajax({url: "{% url api_dispatch_list resource_name='artist' api_name='v1' %}",
+                        cache: false,
+                        type: "GET",
+                        dataType: "json",
+                        data: {name: t_artist},
+                       }),
+                $.ajax({url:  "{% url api_dispatch_list resource_name='artist' api_name='v1' %}",
+                        cache: false,
+                        type: "GET",
+                        dataType: "json",
+                        data: {name: a_artist},
+                       })
+            ).then(function(trackArtistData, albumArtistData) {
+                // Now that we have the track and album artist the request to update the track
+                // can specify the existing artists OR create new ones as needed.
+                var trackUrl = $('#edit_track_modal').attr('data-url');
+                var trackArtist = '';
+                var albumArtist = '';
+
+                if(trackArtistData[0].artists.length !== 0) {
+                    trackArtist = trackArtistData[0].artists[0].resource_uri;
+                } else {
+                    // create a new artist
+                    trackArtist = {'name': $('#id_track-artist').val()};
+                }
+
+                if(albumArtistData[0].artists.length !== 0) {
+                    albumArtist = albumArtistData[0].artists[0].resource_uri;
+                } else {
+                    // creating a new artist again.  I sure hope this doesn't
+                    // clash with the trackArtist if both are the same thing
+                    albumArtist = {'name': $('#id_album-artist').val()};
+                }
+
+                var postData = JSON.stringify({"artist": trackArtist,
+                                               "album": {"artist": albumArtist}
+                                              });
+                alert(postData);
+                $.ajax({url: trackUrl,
+                        cache: false,
+                        dataType: "json",
+                        type: "PATCH",  // change to "PATCH"
+                        contentType: "application/json",
+                        data: postData,
+                       }); 
+            });
         });
         
     }

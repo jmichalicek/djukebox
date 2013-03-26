@@ -37,7 +37,10 @@ class TrackUploadForm(forms.Form):
                 raise forms.ValidationError('File type is not supported: %s' %file_type)
         return data
 
-class TrackEditForm(forms.ModelForm):
+class TrackEditForm(forms.Form):
+    title = forms.CharField(max_length=100, required=False)
+    artist = forms.CharField(max_length=100, required=False)
 
-    class Meta:
-        model = Track
+class AlbumEditForm(forms.Form):
+    title = forms.CharField(max_length=100, required=False, label='Album Title')
+    artist = forms.CharField(max_length=100, required=False, label='Album Artist')
