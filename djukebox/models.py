@@ -23,7 +23,7 @@ logger = logging.getLogger(__name__)
 class Album(models.Model):
     """The album which a track is from"""
     title = models.CharField(max_length=100)
-    artist = models.ForeignKey('Artist', db_index=True)
+    artist = models.ForeignKey('Artist', db_index=True, null=True, blank=True)
     cover_art = models.ImageField(upload_to='djukebox/art/%Y/%m/%d/', blank=True, null=True)
     user = models.ForeignKey(User, db_index=True)
     created = models.DateTimeField(db_index=True, auto_now_add=True, blank=True)
