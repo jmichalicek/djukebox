@@ -81,7 +81,7 @@
       {{ album_edit_form }}
     </div>
     <div class="modal-footer">
-      <div id="save_track" class="btn">Save</div>
+      <div id="save_track" class="btn" data-dismiss="modal">Save</div>
     </div>
   </div>
 </div>
@@ -290,11 +290,9 @@ $(document).ready(function() {
                 $.ajax({url: trackUrl,
                         cache: false,
                         dataType: "json",
-                        type: "PATCH",  // change to "PATCH"
+                        type: "PATCH",
                         contentType: "application/json",
                         data: trackPostData,
-                       }).done(function () {
-                           $('#edit_track_modal').toggle()
                        });
             });
         });   
