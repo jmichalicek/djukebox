@@ -205,9 +205,16 @@ $(document).ready(function() {
                    }
                   ).done(function (track) {
                       $('#id_track-title').val(track.title);
-                      $('#id_track-artist').val(track.artist.name);
-                      $('#id_album-title').val(track.album.title);
-                      $('#id_album-artist').val(track.album.artist.name);
+                      if(track.artist != null) {
+                          $('#id_track-artist').val(track.artist.name);
+                      }
+
+                      if(track.album != null) {
+                          $('#id_album-title').val(track.album.title);
+                          if(track.album.artist != null) {
+                              $('#id_album-artist').val(track.album.artist.name);
+                          }
+                      }
                       $('#edit_track_modal').attr('data-url', trackUrl);
                       $('#edit_track_modal').modal();
                   });
