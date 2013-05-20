@@ -11,6 +11,7 @@ from tastypie.resources import ModelResource
 from django.conf import settings
 from django.middleware.csrf import _sanitize_token, constant_time_compare
 from django.utils.http import same_origin
+from django.conf.urls.defaults import url
 
 from models import Album, Artist, Track
 
@@ -139,7 +140,7 @@ class AlbumResource(UserOwnedModelResource):
         resource_name = 'album'
         collection_name = 'albums'
         list_allowed_methods = ['get']
-        detail_allowed_methods = ['get']
+        detail_allowed_methods = ['get', 'patch']
         authentication = SessionAuthentication()
         authorization = Authorization()
         filtering = {
@@ -169,13 +170,14 @@ class ArtistResource(UserOwnedModelResource):
         queryset = Artist.objects.all()
         resource_name = 'artist'
         collection_name = 'artists'
-        list_allowed_methods = ['get']
+        list_allowed_methods = ['get', 'post']
         detail_allowed_methods = ['get', 'patch']
         authentication = SessionAuthentication()
         authorization = Authorization()
         filtering = {
             'name': ('exact', 'startswith'),
         }
+        always_return_data = True
 
     #tastypie 0.9.12 will use Meta.collection_name properly so that
     #this doesn't need to be done to name the collection something
@@ -189,6 +191,12 @@ class ArtistResource(UserOwnedModelResource):
         data['objects'] = data['artists']
         del data['artists']
         return data
+
+    # save this for later.  will break too many things to do it this way right now
+    #def override_urls(self):
+    #    return [
+    #        url(r"^(?P<resource_name>%s)/(?P<name>[\s\w\d_.-]+)/$" % self._meta.resource_name, self.wrap_view('dispatch_detail'), name="api_dispatch_detail"),
+    #    ]
 
 
 class TrackResource(UserOwnedModelResource):
@@ -229,3 +237,22 @@ class TrackResource(UserOwnedModelResource):
         bundle.data['mp3_stream_url'] = bundle.obj.mp3_stream_url()
         bundle.data['ogg_stream_url'] = bundle.obj.ogg_stream_url()
         return bundle
+
+class TrackAlbumResource(Resource):
+    """
+    A special resource for posting title and artist for both track
+    and album in one shot so that multiple round trip http
+    requests are not required to determine if the correct artist and
+    album already exist.
+    Provides a denormalized abstraction over the highly normalized db
+    which is modeled in most of the resources.
+    """
+
+    track_artist = fields.CharField()
+    track_title = fields.CharField()
+    album_artist = fields.CharField()
+    album_title = fields.CharField()
+
+    def obj_update(self, request=None, **kwargs):
+        pass
+
