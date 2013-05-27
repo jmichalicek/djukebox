@@ -195,6 +195,7 @@ $(document).ready(function() {
         
         $('#main').on('click', '.editbutton', function () {
             var trackUrl = $(this).parents('.track_item').attr('data-url');
+            var trackId = $(this).parents('.track_item').attr('data-track-id');
 
             // These lookups should check a cache first, eventually
             $.ajax({url: trackUrl,
@@ -215,7 +216,8 @@ $(document).ready(function() {
                               $('#id_album-artist').val(track.album.artist.name);
                           }
                       }
-                      $('#edit_track_modal').attr('data-url', trackUrl);
+                      //$('#edit_track_modal').attr('data-url', trackUrl);
+                      $('#edit_track_modal').attr('data-track-id', trackId);
                       $('#edit_track_modal').modal();
                   });
         });
@@ -226,83 +228,29 @@ $(document).ready(function() {
             // to avoid risk of race conditions between ajax calls and the user clicking/typing
             // something else if the system is being particularly slow.
             var sender = $(this);
-            var t_artist = $('#id_track-artist').val();
-            var a_artist = $('#id_album-artist').val();
+            var trackArtist = $('#id_track-artist').val(); //was t_artist
+            var albumArtist = $('#id_album-artist').val(); //was a_artist
             var trackTitle = $('#id_track-title').val();
             var albumTitle = $('#id_album-title').val();
-            var trackUrl = $('#edit_track_modal').attr('data-url');
 
-            // First see if there is already an album and artist matching track and album
-            // artist data.  This is done as a list request, but will only come back with one
-            // result each due to db unique indexes.  It may make sense to update the API
-            // to allow the detail to be requested by something other than pk to make
-            // this more clear.
-            // These should be moved to functions which check a cache first before making the request
-            $.when(
-                $.ajax({url: "{% url api_dispatch_list resource_name='artist' api_name='v1' %}",
-                        cache: false,
-                        type: "GET",
-                        dataType: "json",
-                        data: {name: t_artist},
-                       }),
-                $.ajax({url:  "{% url api_dispatch_list resource_name='artist' api_name='v1' %}",
-                        cache: false,
-                        type: "GET",
-                        dataType: "json",
-                        data: {name: a_artist},
-                       }),
-                $.ajax({url: "{% url api_dispatch_list resource_name='album' api_name='v1' %}",
-                        cache: false,
-                        type: "GET",
-                        dataType: "json",
-                        data: {title: albumTitle, artist__name: a_artist}
-                       })
-            ).then(function(trackArtistData, albumArtistData, albumData) {
-                // Now that we have the track and album artist the request to update the track
-                // can specify the existing artists OR create new ones as needed.
-                var trackArtist = '';
-                var albumArtist = '';
-                                                  
-                // first set up the album correctly since the track relies on it.
-                // if albumData doesn't have the album, it needs created first.
-                // The album artist can be set in one shot
-                if(trackArtistData[0].artists.length !== 0) {
-                    trackArtist = trackArtistData[0].artists[0].resource_uri;
-                } else {
-                    // create a new artist
-                    trackArtist = {"name": t_artist};
-                }
+            var trackId = $('#edit_track_modal').data('track-id');
+            var trackData = $('[data-track-id=' + trackId + ']');
+            var trackUrl = $(trackData).data('url');
 
-                if(albumArtistData[0].artists.length !== 0) {
-                    albumArtist = albumArtistData[0].artists[0].resource_uri;
-                } else {
-                    // creating a new artist again.  I sure hope this doesn't
-                    // clash with the trackArtist if both are the same thing
-                    albumArtist = {"name": a_artist};
-                }
-
-                if(albumData[0].albums.length !== 0) {
-                    album = albumData[0].albums[0].resource_uri;
-                } else {
-                    album = {"title": albumTitle,
-                             "artist": albumArtist};
-                }
-                
-                var trackPostData = JSON.stringify({"title": trackTitle,
-                                                    "artist": trackArtist,
-                                                    "album": album
-                                                   });
-
-                
-                $.ajax({url: trackUrl,
-                        cache: false,
-                        dataType: "json",
-                        type: "PATCH",
-                        contentType: "application/json",
-                        data: trackPostData,
-                       });
-            });
-        });   
+            $.ajax("{% url api_dispatch_list resource_name='track_album', api_name='v1' %}" + $(trackData).data('track-id') + '/',
+                   {cache: false,
+                    dataType: "json",
+                    type: "PATCH",
+                    contentType: "application/json",
+                    data: JSON.stringify({track_artist: trackArtist, track_title: trackTitle,
+                                          album_artist: albumArtist, album_title: albumTitle}),
+                   }).done(function (data) {
+                       // this will reload just the data in the list without reloading the entire page
+                       // that way the current tracks/artists/etc. get updated without actually reloading
+                       // the whole page and interrupting a playing track.
+                       router.routeToView();
+                   });
+        });
     }
     
     function bindUpload() {
