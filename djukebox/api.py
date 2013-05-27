@@ -6,7 +6,7 @@ from tastypie import fields
 from tastypie.constants import ALL_WITH_RELATIONS
 from tastypie.authentication import Authentication
 from tastypie.authorization import Authorization
-from tastypie.resources import ModelResource
+from tastypie.resources import ModelResource, Resource
 
 from django.conf import settings
 from django.middleware.csrf import _sanitize_token, constant_time_compare
@@ -238,6 +238,9 @@ class TrackResource(UserOwnedModelResource):
         bundle.data['ogg_stream_url'] = bundle.obj.ogg_stream_url()
         return bundle
 
+
+from .forms import AlbumEditForm, TrackEditForm
+from django.db import transaction
 class TrackAlbumResource(Resource):
     """
     A special resource for posting title and artist for both track
@@ -253,6 +256,53 @@ class TrackAlbumResource(Resource):
     album_artist = fields.CharField()
     album_title = fields.CharField()
 
-    def obj_update(self, request=None, **kwargs):
-        pass
+    class Meta:
+        resource_name = 'track_album'
+        detail_uri_name = 'pk'
+        detail_allowed_methods = ['get', 'patch']
+        authentication = SessionAuthentication()
+        authorization = Authorization()
 
+    def obj_get(self, request=None, **kwargs):
+        # ModelResource actually calls obj_get_list which does a bunch
+        # of stuff and returns a queryset of Track.objects.filter()
+        # and then obj_get returns the first of those if length == 1
+        # otherwise raises exceptions.  For now I am keeping this simple
+        # and only doing exactly what I need right now.
+        return Track.objects.get(**kwargs)
+
+    @transaction.commit_on_success
+    def obj_update(self, bundle, request=None, **kwargs):
+        bundle = self.full_hydrate(bundle)
+
+        # I suspect there's a better place to do this, before it even gets put in the bundle
+        # but for now this place is obvious to me and works for my exact needs at the moment
+        album_data = AlbumEditForm({'artist': bundle.data['album_artist'],
+                                    'title': bundle.data['album_title']})
+        track_data = TrackEditForm({'artist': bundle.data['track_artist'],
+                                    'title': bundle.data['track_title']})
+
+        if album_data.is_valid() and track_data.is_valid():
+            album_artist, created = Artist.objects.get_or_create(user_id=request.user.pk,
+                                                                 name__iexact=album_data.cleaned_data['artist'],
+                                                                 defaults={'name': album_data.cleaned_data['artist']})
+
+            album, created = Album.objects.get_or_create(user_id=request.user.pk,
+                                                         title__iexact=album_data.cleaned_data['title'],
+                                                         artist_id=album_artist.pk,
+                                                         defaults={'title': album_data.cleaned_data['title']})
+
+            if track_data.cleaned_data['artist'].lower() == album_artist.name.lower():
+                track_artist = album_artist
+            else:
+                track_artist, created = Artist.objects.get_or_create(user_id=request.user.pk,
+                                                                     name__iexact=track_data.cleaned_data['artist'],
+                                                                     defaults={'name': track_data.cleaned_data['artist']})
+
+            # Track object ownership is being checked/managed here.  I'm sure there's a better way such as
+            # how the ModelResources handle it
+            Track.objects.filter(pk=kwargs['pk'], user_id=request.user.pk).update(artist=track_artist,
+                                                                                  album=album,
+                                                                                  title=track_data.cleaned_data['title'])
+
+        return bundle

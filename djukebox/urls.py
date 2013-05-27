@@ -6,13 +6,14 @@ from django.conf.urls.defaults import patterns, url, include
 from tastypie.api import NamespacedApi
 
 from models import Mp3File, OggFile
-from api import ArtistResource, AlbumResource, TrackResource
+from api import ArtistResource, AlbumResource, TrackResource, TrackAlbumResource
 
 # There must be a better way
 v1_api = NamespacedApi(api_name='v1', urlconf_namespace='djukeboxapi')
 v1_api.register(ArtistResource())
 v1_api.register(AlbumResource())
 v1_api.register(TrackResource())
+v1_api.register(TrackAlbumResource())
 
 urlpatterns = patterns('',
                        url(r'^api/', include(v1_api.urls)),
