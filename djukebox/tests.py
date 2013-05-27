@@ -8,7 +8,7 @@ from django.conf import settings
 from django.contrib.auth.models import User
 from django.core.urlresolvers import reverse
 from django.test import TestCase
-from django.test.client import Client
+from django.test import client
 
 from mutagen.oggvorbis import OggVorbis
 from mutagen.easyid3 import EasyID3
@@ -695,3 +695,27 @@ class TrackResourceTests(ApiTests):
 
         self.assertEqual(response.status_code, 401)
         self.assertTrue(response['Content-Type'].startswith('text/html'))
+
+class TrackAlbumResourceTests(ApiTests):
+
+    def setUp(self):
+        super(TrackAlbumResourceTests, self).setUp()
+
+    def test_update_track_title(self):
+        artist = Artist.objects.create(name='Justin Michalicek', user=self.user)
+        album = Album.objects.create(title='Justin Rocks Out', artist=artist, user=self.user)
+        track = Track.objects.create(title='Justin Is Currently Rocking', album=album, artist=artist, user=self.user)
+
+        new_data = {
+            'track_artist': track.artist.name + ' 2',
+            'track_title': track.title + ' 2',
+            'album_artist': album.artist.name,
+            'album_title': album.title
+            }
+
+        reverse_kwargs = {'resource_name': 'track_album', 'api_name': 'v1', 'pk': track.pk}
+        # this should work after upgrade to django 1.5
+        response = self.client.patch(reverse('api_dispatch_detail', kwargs=reverse_kwargs),
+                                     new_data)
+
+        self.assertEqual(response.status_code, 200)
