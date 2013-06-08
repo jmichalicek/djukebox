@@ -237,7 +237,7 @@ $(document).ready(function() {
             var trackData = $('[data-track-id=' + trackId + ']');
             var trackUrl = $(trackData).data('url');
 
-            $.ajax("{% url 'api_dispatch_list' resource_name='track_album', api_name='v1' %}" + $(trackData).data('track-id') + '/',
+            $.ajax("{% url 'api_dispatch_list' resource_name='track_album' api_name='v1' %}" + $(trackData).data('track-id') + '/',
                    {cache: false,
                     dataType: "json",
                     type: "PATCH",
