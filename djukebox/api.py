@@ -76,7 +76,7 @@ class InlineToggleMixIn(object):
 
     # handy dehydrate_related from
     # http://chrismeyers.org/2012/06/25/tastypie-inline-aka-nested-fulltrue-embedded-relationship-dynamically-via-get-parameter/
-    def dehydrate_related(self, bundle, related_resource):
+    def dehydrate_related(self, bundle, related_resource, *args, **kwargs):
         """
         Overrides the standard RelatedField.dehydrate_related().
         Returns the full details of a related resource if it is
@@ -148,16 +148,6 @@ class AlbumResource(UserOwnedModelResource):
             'title': ('exact'),
             }
 
-    def alter_list_data_to_serialize(self, request, data):
-        data['albums'] = data['objects']
-        del data['objects']
-        return data
-
-    def alter_deserialized_list_data(self, request, data):
-        data['objects'] = data['albums']
-        del data['albums']
-        return data
-
 
 class ArtistResource(UserOwnedModelResource):
     """Tastypie resource representing djukebox.models.Artist()"""
@@ -178,19 +168,6 @@ class ArtistResource(UserOwnedModelResource):
             'name': ('exact', 'startswith'),
         }
         always_return_data = True
-
-    #tastypie 0.9.12 will use Meta.collection_name properly so that
-    #this doesn't need to be done to name the collection something
-    #other than "objects"
-    def alter_list_data_to_serialize(self, request, data):
-        data['artists'] = data['objects']
-        del data['objects']
-        return data
-
-    def alter_deserialized_list_data(self, request, data):
-        data['objects'] = data['artists']
-        del data['artists']
-        return data
 
     # save this for later.  will break too many things to do it this way right now
     #def override_urls(self):
@@ -221,11 +198,6 @@ class TrackResource(UserOwnedModelResource):
             'album__artist': ALL_WITH_RELATIONS,
             'artist': ALL_WITH_RELATIONS
             }
-
-    def alter_list_data_to_serialize(self, request, data):
-        data['tracks'] = data['objects']
-        del data['objects']
-        return data
 
     def dehydrate(self, bundle):
 
