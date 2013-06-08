@@ -7,7 +7,7 @@
 <div class="navbar navbar-fixed-top">
   <div class="navbar-inner">
     <div class="container">
-      <a class="brand" href="{% url djukebox-root %}#">Djukebox</a>
+      <a class="brand" href="{% url 'djukebox-root' %}#">Djukebox</a>
     </div>
   </div>
 </div>
@@ -15,12 +15,12 @@
   <div class="row" style="height: 100%">
     <div class="span2 sidebar">
       <ul class="nav nav-pills nav-stacked">
-        <li><a href="{% url djukebox-root %}#">Home</a></li>
-        <li><a href="{% url djukebox-root %}#albums/">Albums</a></li>
-        <li><a href="{% url djukebox-root %}#artists/">Artists</a></li>
-        <li><a href="{% url djukebox-root %}#tracks/">All Songs</a></li>
+        <li><a href="{% url 'djukebox-root' %}#">Home</a></li>
+        <li><a href="{% url 'djukebox-root' %}#albums/">Albums</a></li>
+        <li><a href="{% url 'djukebox-root' %}#artists/">Artists</a></li>
+        <li><a href="{% url 'djukebox-root' %}#tracks/">All Songs</a></li>
         <li><a id="upload_link" style="cursor:pointer">Upload</a></li>
-        <li><a href="{% url djukebox-logout %}">Logout</a></li>
+        <li><a href="{% url 'djukebox-logout' %}">Logout</a></li>
       </ul>
     </div>
     <div class="span10" id="content" name="content" style="height: 100%">
@@ -51,7 +51,7 @@
   </div>
 
   <div style="display:hidden;">
-    <form name="upload_file" enctype="multipart/form-data" method="post" action="{% url djukebox-iframe-upload %}" target="track_upload">
+    <form name="upload_file" enctype="multipart/form-data" method="post" action="{% url 'djukebox-iframe-upload' %}" target="track_upload">
         <input id="id_file" type="file" name="file" />
       </form>
   </div>
@@ -237,7 +237,7 @@ $(document).ready(function() {
             var trackData = $('[data-track-id=' + trackId + ']');
             var trackUrl = $(trackData).data('url');
 
-            $.ajax("{% url api_dispatch_list resource_name='track_album', api_name='v1' %}" + $(trackData).data('track-id') + '/',
+            $.ajax("{% url 'api_dispatch_list' resource_name='track_album', api_name='v1' %}" + $(trackData).data('track-id') + '/',
                    {cache: false,
                     dataType: "json",
                     type: "PATCH",
@@ -402,13 +402,13 @@ $(document).ready(function() {
     bindUpload();
     
     router.routes = [
-        [/^tracks\/?$/, allTracksView, {ajaxUrl: "{% url api_dispatch_list resource_name='track' api_name='v1' %}"}],
-        [/^albums\/?$/, albumsView, {ajaxUrl:  "{% url api_dispatch_list resource_name='album' api_name='v1' %}"}],
-        [/^album\/\d+\/?$/, albumView, {ajaxUrl:  "{% url api_dispatch_list resource_name='album' api_name='v1' %}"}],
-        [/^artists\/?$/, artistsView, {ajaxUrl:  "{% url api_dispatch_list resource_name='artist' api_name='v1' %}"}],
-        [/^artist\/\d+\/?/, artistView, {artistUrl: "{% url api_dispatch_list resource_name='artist' api_name='v1' %}",
-                                         albumUrl: "{% url api_dispatch_list resource_name='album' api_name='v1' %}"}],
-        [/.*/, artistsView, {ajaxUrl:  "{% url api_dispatch_list resource_name='artist' api_name='v1' %}"}]
+        [/^tracks\/?$/, allTracksView, {ajaxUrl: "{% url 'api_dispatch_list' resource_name='track' api_name='v1' %}"}],
+        [/^albums\/?$/, albumsView, {ajaxUrl:  "{% url 'api_dispatch_list' resource_name='album' api_name='v1' %}"}],
+        [/^album\/\d+\/?$/, albumView, {ajaxUrl:  "{% url 'api_dispatch_list' resource_name='album' api_name='v1' %}"}],
+        [/^artists\/?$/, artistsView, {ajaxUrl:  "{% url 'api_dispatch_list' resource_name='artist' api_name='v1' %}"}],
+        [/^artist\/\d+\/?/, artistView, {artistUrl: "{% url 'api_dispatch_list' resource_name='artist' api_name='v1' %}",
+                                         albumUrl: "{% url 'api_dispatch_list' resource_name='album' api_name='v1' %}"}],
+        [/.*/, artistsView, {ajaxUrl:  "{% url 'api_dispatch_list' resource_name='artist' api_name='v1' %}"}]
     ];
     
     //preload and compile templates on page load
