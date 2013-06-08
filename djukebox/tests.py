@@ -714,7 +714,7 @@ class TrackAlbumResourceTests(ApiTests):
             }
 
         reverse_kwargs = {'resource_name': 'track_album', 'api_name': 'v1', 'pk': track.pk}
-        # this should work after upgrade to django 1.5
+        # this should work after upgrade to django 1.6
         response = self.client.patch(reverse('api_dispatch_detail', kwargs=reverse_kwargs),
                                      new_data)
 
