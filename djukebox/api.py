@@ -234,13 +234,15 @@ class TrackAlbumResource(Resource):
         detail_allowed_methods = ['get', 'patch']
         authentication = SessionAuthentication()
         authorization = Authorization()
+        object_class = Track
 
-    def obj_get(self, request=None, **kwargs):
+    def obj_get(self, bundle, request=None, **kwargs):
         # ModelResource actually calls obj_get_list which does a bunch
         # of stuff and returns a queryset of Track.objects.filter()
         # and then obj_get returns the first of those if length == 1
         # otherwise raises exceptions.  For now I am keeping this simple
         # and only doing exactly what I need right now.
+
         return Track.objects.get(**kwargs)
 
     @transaction.commit_on_success
