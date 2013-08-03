@@ -3,7 +3,6 @@ Djukebox Djanog models
 """
 
 from django.db import models
-from django.contrib.auth.models import User
 from django.core.exceptions import ObjectDoesNotExist
 from django.core.urlresolvers import reverse
 from django.db.models.signals import post_delete
@@ -25,7 +24,7 @@ class Album(models.Model):
     title = models.CharField(max_length=100)
     artist = models.ForeignKey('Artist', db_index=True, null=True, blank=True)
     cover_art = models.ImageField(upload_to='djukebox/art/%Y/%m/%d/', blank=True, null=True)
-    user = models.ForeignKey(User, db_index=True)
+    user = models.ForeignKey(settings.AUTH_USER_MODEL, db_index=True)
     created = models.DateTimeField(db_index=True, auto_now_add=True, blank=True)
 
     DEFAULT_TITLE = 'Unknown Album'
@@ -60,7 +59,7 @@ class Album(models.Model):
 class Artist(models.Model):
     """An artist who records a track"""
     name = models.CharField(max_length=100)
-    user = models.ForeignKey(User, db_index=True)
+    user = models.ForeignKey(settings.AUTH_USER_MODEL, db_index=True)
     created = models.DateTimeField(db_index=True, auto_now_add=True)
 
     DEFAULT_ARTIST = 'Unknown Artist'
@@ -186,7 +185,7 @@ class Track(models.Model):
     title = models.CharField(max_length=100)
     album = models.ForeignKey('Album', db_index=True, null=True, blank=True)
     track_number = models.PositiveIntegerField(null=True, blank=True)
-    user = models.ForeignKey(User, db_index=True)
+    user = models.ForeignKey(settings.AUTH_USER_MODEL, db_index=True)
     created = models.DateTimeField(db_index=True, auto_now_add=True, blank=True)
     artist = models.ForeignKey('Artist', db_index=True, null=True, blank=True)
 
