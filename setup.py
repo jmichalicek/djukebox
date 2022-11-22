@@ -1,7 +1,7 @@
 from setuptools import setup, find_packages
 
 package_data = ['static/css/*', 'static/img/*', 'static/js/*', 'static/js/templates/*', 'templates/djukebox/*']
-dependencies = ['Pillow==2.1.0', 'django-celery==3.0.21', 'mutagen==1.21', 'simplejson==3.3.0', 'django-bootstrap-form', 'django-tastypie==0.9.15']
+dependencies = ['Pillow==9.3.0', 'django-celery==3.0.21', 'mutagen==1.21', 'simplejson==3.3.0', 'django-bootstrap-form', 'django-tastypie==0.9.15']
 setup(name = "djukebox",
       version = "0.2.0",
       description = "A django HTML 5 audio player",
